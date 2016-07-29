@@ -48,6 +48,7 @@
             android:layout_alignParentRight="true"
             android:layout_marginTop="20dp"
             android:layout_marginRight="20dp"
+            android:textColor="@color/colorNeon"
             android:text="CHILL"/>
 
         <LinearLayout
@@ -67,6 +68,7 @@
                 android:text="BEAR MOUNTAIN"/>
 
             <TextView
+                android:id="@+id/locationHyphen_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" - "/>
