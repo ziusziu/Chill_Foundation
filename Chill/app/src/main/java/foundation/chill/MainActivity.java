@@ -1,11 +1,19 @@
 package foundation.chill;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,7 +29,9 @@ public class MainActivity extends AppCompatActivity {
     TextView elevationTextView;
     TextView locationTextView;
     TextView locationDetailTextView;
-    TextView locationHypehnTextView;
+    TextView locationHyphenTextView;
+    SeekBar contrastSeekBar;
+    ImageView photoImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         initColorButtons();
 
+        initSeekBar();
 
     }
 
@@ -44,7 +55,9 @@ public class MainActivity extends AppCompatActivity {
         elevationTextView = (TextView)findViewById(R.id.elevation_textView);
         locationTextView = (TextView)findViewById(R.id.location1_textView);
         locationDetailTextView = (TextView)findViewById(R.id.location2_textView);
-        locationHypehnTextView = (TextView)findViewById(R.id.locationHyphen_textView);
+        locationHyphenTextView = (TextView)findViewById(R.id.locationHyphen_textView);
+        contrastSeekBar = (SeekBar)findViewById(R.id.contrast_seekBar);
+        photoImage = (ImageView)findViewById(R.id.photo_imageView);
     }
 
     private void initColorButtons(){
@@ -92,12 +105,50 @@ public class MainActivity extends AppCompatActivity {
         temperatureTextView.setTextColor(color);
         elevationTextView.setTextColor(color);
         locationTextView.setTextColor(color);
-        locationHypehnTextView.setTextColor(color);
+        locationHyphenTextView.setTextColor(color);
         locationDetailTextView.setTextColor(color);
     }
 
 
+    private void initSeekBar(){
 
+        contrastSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+                photoImage.setImageBitmap(changeBitmapContrastBrightness(BitmapFactory.decodeResource(getResources(), R.drawable.android_arms), (float) progress / 100f, 1));
+                //textView.setText("Contrast: "+(float) progress / 100f);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        contrastSeekBar.setMax(200);
+        contrastSeekBar.setProgress(100);
+    }
+
+    public static Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness) {
+        ColorMatrix cm = new ColorMatrix(new float[]
+                {
+                        contrast, 0, 0, 0, brightness,
+                        0, contrast, 0, 0, brightness,
+                        0, 0, contrast, 0, brightness,
+                        0, 0, 0, 1, 0
+                });
+
+        Bitmap ret = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
+
+        Canvas canvas = new Canvas(ret);
+
+        Paint paint = new Paint();
+        paint.setColorFilter(new ColorMatrixColorFilter(cm));
+        canvas.drawBitmap(bmp, 0, 0, paint);
+
+        return ret;
+    }
 
 
 }
