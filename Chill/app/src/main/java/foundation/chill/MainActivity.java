@@ -1,6 +1,8 @@
 package foundation.chill;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,9 +11,11 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.location.Location;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleApiClient googleApiClient;
     private static Location lastLocation;
+    private AddressResultReceiver resultReceiver;
 
     Button color1Button;
     Button color2Button;
@@ -61,7 +66,15 @@ public class MainActivity extends AppCompatActivity
         setGoogleApiClient();
         checkPermissions();
 
-        Log.e(TAG, "TESTING");
+        resultReceiver = new AddressResultReceiver(new Handler());
+
+    }
+
+    protected void startIntentService() {
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+        intent.putExtra(Constants.RECEIVER, resultReceiver);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
+        startService(intent);
     }
 
     private void initializeViews() {
@@ -222,6 +235,9 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "Internet Not Connected");
         }
 
+        if(lastLocation != null){
+            startIntentService();
+        }
     }
 
     @Override
@@ -242,7 +258,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     private void getLatLongCoordinates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -252,12 +267,11 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "Longitude: "+String.valueOf(lastLocation.getLongitude()));
             }
             else {
-                Log.d(TAG, "Don't Have permission, LastLocation null");
+                Log.d(TAG, "LastLocation not null");
             }
 
         }
     }
-
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -267,5 +281,31 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+
+
+
+    @SuppressLint("ParcelCreator")
+    class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string
+            // or an error message sent from the intent service.
+            String addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
+            Log.d(TAG, "ADDRESS: " + addressOutput);
+
+            // Show a toast message if an address was found.
+            if (resultCode == Constants.SUCCESS_RESULT) {
+                Log.d(TAG, "ADDRESS FOUND: "+getString(R.string.address_found));
+            }
+
+        }
     }
 }
