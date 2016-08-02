@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
 
         contrastSeekBar.setMax(200);
         contrastSeekBar.setProgress(100);
+        contrastSeekBar.incrementProgressBy(1);
     }
 
     public static Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness) {
