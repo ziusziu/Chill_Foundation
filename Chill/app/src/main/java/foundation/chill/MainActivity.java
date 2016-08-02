@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity
         setGoogleApiClient();
         checkPermissions();
 
+        Log.e(TAG, "TESTING");
     }
 
     private void initializeViews() {
@@ -194,6 +195,8 @@ public class MainActivity extends AppCompatActivity
                     PERMISSION_ACCESS_COARSE_LOCATION);
         } else {
             // Permissions Granted
+            Log.d(TAG, "Permissions Granted");
+            getLatLongCoordinates();
         }
     }
 
@@ -212,7 +215,13 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        getLatLongCoordinates();
+        if(CheckInternetConnection.isNetworkAvailable(MainActivity.this)){
+            Log.d(TAG, "Network Available");
+            getLatLongCoordinates();
+        }else{
+            Log.d(TAG, "Internet Not Connected");
+        }
+
     }
 
     @Override
@@ -224,6 +233,7 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Permissions Granted");
                     getLatLongCoordinates();
                 } else {
                     Toast.makeText(this, "Need device location.", Toast.LENGTH_SHORT).show();
