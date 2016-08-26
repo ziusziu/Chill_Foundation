@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Chill</string>
+    <string name="service_not_available">Service Not Available</string>
+    <string name="invalid_lat_long_used">Invalid Lat Long Used</string>
+    <string name="no_address_found">No Address Found</string>
+    <string name="address_found">Address Found</string>
+    <string name="no_location_data_provided">No Location Data Provided</string>
 </resources>
