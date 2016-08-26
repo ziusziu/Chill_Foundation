@@ -6,7 +6,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
-import android.provider.SyncStateContract;
 import android.support.v4.os.ResultReceiver;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,7 +21,6 @@ import java.util.Locale;
 public class FetchAddressIntentService extends IntentService {
     private static final String TAG = FetchAddressIntentService.class.getSimpleName();
     protected ResultReceiver receiver;
-
 
     public FetchAddressIntentService(){
         super(TAG);
@@ -42,13 +40,9 @@ public class FetchAddressIntentService extends IntentService {
             return;
         }
 
-
-
-
         // Get the location passed to this service through an extra.
         Location location = intent.getParcelableExtra(
                 Constants.LOCATION_DATA_EXTRA);
-
 
         // Make sure that the location data was really sent over through an extra. If it wasn't,
         // send an error error message and return.
@@ -63,8 +57,8 @@ public class FetchAddressIntentService extends IntentService {
 
         try {
             addresses = geocoder.getFromLocation(
-                    location.getLatitude(),
-                    location.getLongitude(),
+                    34.2284424, //location.getLatitude(), //34.2284424
+                    -116.861480, //location.getLongitude(), //-116.861480
                     // In this sample, get just a single address.
                     1);
         } catch (IOException ioException) {
@@ -100,10 +94,20 @@ public class FetchAddressIntentService extends IntentService {
             deliverResultToReceiver(Constants.SUCCESS_RESULT,
                     TextUtils.join(System.getProperty("line.separator"),
                             addressFragments));
+
+            //Log.d(TAG, "Feature Name: "+address.getFeatureName());
+            Log.d(TAG, "Locality: "+address.getLocality()); //Big Bear Lake
+            Log.d(TAG, "AdminArea: "+address.getAdminArea()); // California
+            //Log.d(TAG, "SubLocality: "+address.getSubLocality());
+            //Log.d(TAG, "SubAdminArea: " + address.getSubAdminArea());
+            //Log.d(TAG, "Locale: "+address.getLocale());
+            //Log.d(TAG, "Premises: "+address.getPremises());
+            //Log.d(TAG, "ThroughFare: "+address.getThoroughfare());
+            //Log.d(TAG, "URL: "+address.getUrl());
+
         }
 
     }
-
 
     private void deliverResultToReceiver(int resultCode, String message) {
         Bundle bundle = new Bundle();
