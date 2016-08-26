@@ -30,6 +30,14 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import foundation.chill.model.forecast.Weather;
+import foundation.chill.provider.ForecastService;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -39,6 +47,9 @@ public class MainActivity extends AppCompatActivity
     private GoogleApiClient googleApiClient;
     private static Location lastLocation;
     private AddressResultReceiver resultReceiver;
+
+    private static String latitude;
+    private static String longitude;
 
     Button color1Button;
     Button color2Button;
@@ -68,7 +79,50 @@ public class MainActivity extends AppCompatActivity
 
         resultReceiver = new AddressResultReceiver(new Handler());
 
+        ForecastService.ForecastRx forecast = ForecastService.createRx();
+        callForecastApi(forecast);
+
     }
+
+    protected void callForecastApi(ForecastService.ForecastRx forecast){
+
+        latitude = "-73.723975";
+        longitude = "-66.215334";
+
+        Timber.d("PRINT LATITUDE AND LONGITUDE " + latitude + " " + longitude);
+        if(latitude.equals("0.0") & longitude.equals("0.0")){
+            latitude = "Nothing";
+            longitude = "Nothing";
+        }
+        String latLong = latitude+","+longitude;
+
+        String forecastApiKey = "";
+
+        Observable<Weather> observable = forecast.getWeather(forecastApiKey, latLong);
+        observable.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Weather>(){
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(Weather weather) {
+                        Timber.d("TimeZone: " + weather.getTimezone());
+                        locationTextView.setText(weather.getHourly().getSummary().toString());
+                    }
+                });
+
+
+    }
+
 
     protected void startIntentService() {
         Intent intent = new Intent(this, FetchAddressIntentService.class);
