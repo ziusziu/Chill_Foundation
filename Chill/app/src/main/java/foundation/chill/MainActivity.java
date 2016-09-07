@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity
         }
         String latLong = latitude+","+longitude;
 
-        String forecastApiKey = "";
+        String forecastApiKey = getResources().getString(R.string.forecast_api);
 
         Observable<Weather> observable = forecast.getWeather(forecastApiKey, latLong);
         observable.subscribeOn(Schedulers.newThread())
