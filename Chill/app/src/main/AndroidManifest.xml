@@ -38,12 +38,6 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".CameraActivity">
-
-
-
-        </activity>
-
         <provider
             android:name="com.adobe.creativesdk.aviary.internal.cds.CdsProvider"
             android:authorities="${applicationId}.CdsProvider"
