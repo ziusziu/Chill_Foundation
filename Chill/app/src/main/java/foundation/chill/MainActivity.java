@@ -2,6 +2,7 @@ package foundation.chill;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -11,7 +12,10 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,9 +30,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import java.io.File;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -50,6 +57,21 @@ public class MainActivity extends AppCompatActivity
 
     private static String latitude;
     private static String longitude;
+
+    private static final int CAMERA_REQUEST = 1888;
+    Bitmap photo;
+    private static final int TAKE_PICTURE = 1;
+    private static final int GET_EDIT_PICTURE = 2;
+    private Uri imageUri;
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
+    };
+
+
 
     Button color1Button;
     Button color2Button;
@@ -74,6 +96,8 @@ public class MainActivity extends AppCompatActivity
 
         initSeekBar();
 
+        setImageViewClickListener();
+
         setGoogleApiClient();
         checkPermissions();
 
@@ -81,6 +105,66 @@ public class MainActivity extends AppCompatActivity
 
         ForecastService.ForecastRx forecast = ForecastService.createRx();
         callForecastApi(forecast);
+
+
+    }
+
+    private void setImageViewClickListener(){
+        photoImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                verifyStoragePermissions(MainActivity.this);
+//                Intent takePictureIntent = new Intent(MainActivity.this, CameraActivity.class);
+//                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+//                    startActivityForResult(takePictureIntent, CAMERA_REQUEST);
+//                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
+//                }
+            }
+        });
+    }
+
+    public void takePhoto(){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File photo = new File(Environment.getExternalStorageDirectory(), "Pic.jpg");
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+        imageUri = Uri.fromFile(photo);
+        startActivityForResult(intent, TAKE_PICTURE);
+    }
+
+    public void verifyStoragePermissions(Activity activity){
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if(permission != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+        }else{
+            takePhoto();
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if(resultCode == RESULT_OK){
+            switch(requestCode){
+                case TAKE_PICTURE:
+                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
+                    startActivityForResult(imageEditorIntent, GET_EDIT_PICTURE);
+                    break;
+                case GET_EDIT_PICTURE:
+                    Uri editedImageUri = data.getData();
+                    photoImage.setImageURI(editedImageUri);
+                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
+                    break;
+                default: break;
+            }
+        }
+
+//        if(requestCode == CAMERA_REQUEST && resultCode == RESULT_OK){
+//            photoImage.setImageBitmap(null);
+//            photo = (Bitmap) data.getExtras().get("data");
+//            photoImage.setImageBitmap(photo);
+//        }
 
     }
 
@@ -290,7 +374,10 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(lastLocation != null){
+            Log.d(TAG, "lastlocation not null");
             startIntentService();
+        }else{
+            Log.d(TAG, "lastlocation null");
         }
     }
 
