@@ -17,6 +17,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.os.ResultReceiver;
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity
     TextView locationHyphenTextView;
     SeekBar contrastSeekBar;
     ImageView photoImage;
+    FloatingActionButton shareFAB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +99,7 @@ public class MainActivity extends AppCompatActivity
         initSeekBar();
 
         setImageViewClickListener();
+        setFabClickListenter();
 
         setGoogleApiClient();
         checkPermissions();
@@ -109,16 +112,21 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    private void setFabClickListenter(){
+        shareFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "FAB BUTTON Clicked");
+            }
+        });
+    }
+
+
     private void setImageViewClickListener(){
         photoImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 verifyStoragePermissions(MainActivity.this);
-//                Intent takePictureIntent = new Intent(MainActivity.this, CameraActivity.class);
-//                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-//                    startActivityForResult(takePictureIntent, CAMERA_REQUEST);
-//                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
-//                }
             }
         });
     }
@@ -159,12 +167,6 @@ public class MainActivity extends AppCompatActivity
                 default: break;
             }
         }
-
-//        if(requestCode == CAMERA_REQUEST && resultCode == RESULT_OK){
-//            photoImage.setImageBitmap(null);
-//            photo = (Bitmap) data.getExtras().get("data");
-//            photoImage.setImageBitmap(photo);
-//        }
 
     }
 
@@ -228,6 +230,7 @@ public class MainActivity extends AppCompatActivity
         locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
         contrastSeekBar = (SeekBar) findViewById(R.id.contrast_seekBar);
         photoImage = (ImageView) findViewById(R.id.photo_imageView);
+        shareFAB = (FloatingActionButton) findViewById(R.id.fab);
     }
 
     private void initColorButtons() {
