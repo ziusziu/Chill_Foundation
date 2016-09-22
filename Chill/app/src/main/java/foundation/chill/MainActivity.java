@@ -6,11 +6,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
@@ -27,7 +22,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,7 +78,6 @@ public class MainActivity extends AppCompatActivity
     TextView locationTextView;
     TextView locationDetailTextView;
     TextView locationHyphenTextView;
-    SeekBar contrastSeekBar;
     ImageView photoImage;
     FloatingActionButton shareFAB;
 
@@ -95,8 +88,6 @@ public class MainActivity extends AppCompatActivity
 
         initializeViews();
         initColorButtons();
-
-        initSeekBar();
 
         setImageViewClickListener();
         setFabClickListenter();
@@ -228,7 +219,6 @@ public class MainActivity extends AppCompatActivity
         locationTextView = (TextView) findViewById(R.id.location1_textView);
         locationDetailTextView = (TextView) findViewById(R.id.location2_textView);
         locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
-        contrastSeekBar = (SeekBar) findViewById(R.id.contrast_seekBar);
         photoImage = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
     }
@@ -283,48 +273,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void initSeekBar() {
-
-        contrastSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
-                photoImage.setImageBitmap(changeBitmapContrastBrightness(BitmapFactory.decodeResource(getResources(), R.drawable.android_arms), (float) progress / 100f, 1));
-                //textView.setText("Contrast: "+(float) progress / 100f);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
-
-        contrastSeekBar.setMax(200);
-        contrastSeekBar.setProgress(100);
-        contrastSeekBar.incrementProgressBy(1);
-    }
-
-    public static Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness) {
-        ColorMatrix cm = new ColorMatrix(new float[]
-                {
-                        contrast, 0, 0, 0, brightness,
-                        0, contrast, 0, 0, brightness,
-                        0, 0, contrast, 0, brightness,
-                        0, 0, 0, 1, 0
-                });
-
-        Bitmap ret = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
-
-        Canvas canvas = new Canvas(ret);
-
-        Paint paint = new Paint();
-        paint.setColorFilter(new ColorMatrixColorFilter(cm));
-        canvas.drawBitmap(bmp, 0, 0, paint);
-
-        return ret;
-    }
 
 
     private void setGoogleApiClient() {
