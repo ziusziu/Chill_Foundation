@@ -42,6 +42,9 @@
             android:name="com.adobe.creativesdk.aviary.internal.cds.CdsProvider"
             android:authorities="${applicationId}.CdsProvider"
             android:exported="false" />
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="05812468bd26bb3ceee14f7fcbc3e700a841c269" />
     </application>
 
 </manifest>
