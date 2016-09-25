@@ -11,10 +11,13 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.List;
 
 import foundation.chill.MainActivity;
@@ -54,7 +57,14 @@ public class UtilityFunction {
     }
 
 
-
+    public static Uri takePhoto(Activity activity){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File photo = new File(Environment.getExternalStorageDirectory(), "Pic.jpg");
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+        Uri imageUri = Uri.fromFile(photo);
+        activity.startActivityForResult(intent, Constants.TAKE_PICTURE);
+        return imageUri;
+    }
 
 
 

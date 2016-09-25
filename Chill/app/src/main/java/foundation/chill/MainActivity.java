@@ -97,14 +97,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void setFabClickListenter(){
-        shareFAB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
-            }
-        });
-    }
+
 
 
     private void setImageViewClickListener(){
@@ -116,13 +109,17 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    public void takePhoto(){
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File photo = new File(Environment.getExternalStorageDirectory(), "Pic.jpg");
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
-        imageUri = Uri.fromFile(photo);
-        startActivityForResult(intent, Constants.TAKE_PICTURE);
+    private void setFabClickListenter(){
+        shareFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
+            }
+        });
     }
+
+
+
 
     public void verifyStoragePermissions(Activity activity){
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -130,7 +127,7 @@ public class MainActivity extends AppCompatActivity
         if(permission != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(activity, Constants.PERMISSIONS_STORAGE, Constants.REQUEST_EXTERNAL_STORAGE);
         }else{
-            takePhoto();
+            imageUri = UtilityFunction.takePhoto(activity);
         }
     }
 
