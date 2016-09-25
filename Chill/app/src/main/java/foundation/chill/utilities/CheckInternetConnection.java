@@ -1,4 +1,4 @@
-package foundation.chill;
+package foundation.chill.utilities;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

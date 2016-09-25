@@ -1,4 +1,4 @@
-package foundation.chill;
+package foundation.chill.provider;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import foundation.chill.R;
+import foundation.chill.utilities.Constants;
 
 /**
  * Created by samsiu on 8/2/16.

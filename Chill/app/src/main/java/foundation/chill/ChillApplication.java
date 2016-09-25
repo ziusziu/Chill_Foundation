@@ -31,6 +31,7 @@ public class ChillApplication extends Application implements IAviaryClientCreden
         }
     }
 
+
     @Override
     public String getClientID() {
         return creativeSDKClientId;
