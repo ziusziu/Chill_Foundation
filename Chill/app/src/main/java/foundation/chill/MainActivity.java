@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
@@ -38,6 +37,9 @@ import java.util.List;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
+import foundation.chill.utilities.CheckInternetConnection;
+import foundation.chill.utilities.Constants;
+import foundation.chill.provider.FetchAddressIntentService;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private final int PERMISSION_ACCESS_COARSE_LOCATION = 22;
+
 
     private GoogleApiClient googleApiClient;
     private static Location lastLocation;
@@ -57,18 +59,11 @@ public class MainActivity extends AppCompatActivity
     private static String latitude;
     private static String longitude;
 
-    private static final int CAMERA_REQUEST = 1888;
-    Bitmap photo;
-    private static final int TAKE_PICTURE = 1;
-    private static final int GET_EDIT_PICTURE = 2;
+
+
     private Uri imageUri;
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
-    };
+
 
 
 
@@ -170,14 +165,14 @@ public class MainActivity extends AppCompatActivity
         File photo = new File(Environment.getExternalStorageDirectory(), "Pic.jpg");
         intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
         imageUri = Uri.fromFile(photo);
-        startActivityForResult(intent, TAKE_PICTURE);
+        startActivityForResult(intent, Constants.TAKE_PICTURE);
     }
 
     public void verifyStoragePermissions(Activity activity){
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if(permission != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(activity, Constants.PERMISSIONS_STORAGE, Constants.REQUEST_EXTERNAL_STORAGE);
         }else{
             takePhoto();
         }
@@ -189,11 +184,11 @@ public class MainActivity extends AppCompatActivity
 
         if(resultCode == RESULT_OK){
             switch(requestCode){
-                case TAKE_PICTURE:
+                case Constants.TAKE_PICTURE:
                     Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
-                    startActivityForResult(imageEditorIntent, GET_EDIT_PICTURE);
+                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                     break;
-                case GET_EDIT_PICTURE:
+                case Constants.GET_EDIT_PICTURE:
                     editedImageUri = data.getData();
                     photoImage.setImageURI(editedImageUri);
                     photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -337,7 +332,7 @@ public class MainActivity extends AppCompatActivity
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.ACCESS_COARSE_LOCATION},
-                    PERMISSION_ACCESS_COARSE_LOCATION);
+                    Constants.PERMISSION_ACCESS_COARSE_LOCATION);
         } else {
             // Permissions Granted
             Log.d(TAG, "Permissions Granted");
@@ -379,7 +374,7 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
-            case PERMISSION_ACCESS_COARSE_LOCATION:
+            case Constants.PERMISSION_ACCESS_COARSE_LOCATION:
                 if (permissions.length < 0){
                     return;
                 }
