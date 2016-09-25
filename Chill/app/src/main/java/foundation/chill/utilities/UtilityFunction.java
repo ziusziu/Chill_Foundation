@@ -1,15 +1,23 @@
 package foundation.chill.utilities;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
+import java.util.List;
+
+import foundation.chill.MainActivity;
 import foundation.chill.R;
 
 /**
@@ -18,6 +26,44 @@ import foundation.chill.R;
 
 public class UtilityFunction {
 
+    public static void sendTweet(Activity activity, String bodyText, Uri editedImageUri){
+
+        Intent tweetIntent = new Intent(Intent.ACTION_SEND);
+        tweetIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+        tweetIntent.putExtra(Intent.EXTRA_STREAM, editedImageUri);
+        tweetIntent.setType("text/plain");
+
+        PackageManager packManager = activity.getPackageManager();
+        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(tweetIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+
+        boolean resolved = false;
+        for(ResolveInfo resolveInfo: resolvedInfoList){
+            if(resolveInfo.activityInfo.packageName.startsWith("com.twitter.android")){
+                tweetIntent.setClassName(
+                        resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name );
+                resolved = true;
+                break;
+            }
+        }
+        if(resolved){
+            activity.startActivity(tweetIntent);
+        }else{
+            Toast.makeText(activity.getApplication(), "Twitter app isn't found", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+//// ------- Not Being used
 
     private void initSeekBar(SeekBar seekBar, final ImageView imageView, final Activity activity) {
 

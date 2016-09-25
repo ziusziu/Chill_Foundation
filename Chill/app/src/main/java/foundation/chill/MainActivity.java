@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
@@ -40,6 +39,7 @@ import foundation.chill.provider.ForecastService;
 import foundation.chill.utilities.CheckInternetConnection;
 import foundation.chill.utilities.Constants;
 import foundation.chill.provider.FetchAddressIntentService;
+import foundation.chill.utilities.UtilityFunction;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -59,13 +59,7 @@ public class MainActivity extends AppCompatActivity
     private static String latitude;
     private static String longitude;
 
-
-
     private Uri imageUri;
-
-
-
-
 
     Button color1Button;
     Button color2Button;
@@ -107,47 +101,9 @@ public class MainActivity extends AppCompatActivity
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendTweet();
+                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
             }
         });
-    }
-
-    private void sendTweet(){
-
-        Intent tweetIntent = new Intent(Intent.ACTION_SEND);
-        tweetIntent.putExtra(Intent.EXTRA_TEXT, "This is a Test.");
-        tweetIntent.putExtra(Intent.EXTRA_STREAM, editedImageUri);
-        tweetIntent.setType("text/plain");
-
-        PackageManager packManager = getPackageManager();
-        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(tweetIntent,  PackageManager.MATCH_DEFAULT_ONLY);
-
-        boolean resolved = false;
-        for(ResolveInfo resolveInfo: resolvedInfoList){
-            if(resolveInfo.activityInfo.packageName.startsWith("com.twitter.android")){
-                tweetIntent.setClassName(
-                        resolveInfo.activityInfo.packageName,
-                        resolveInfo.activityInfo.name );
-                resolved = true;
-                break;
-            }
-        }
-        if(resolved){
-            startActivity(tweetIntent);
-        }else{
-            Toast.makeText(MainActivity.this, "Twitter app isn't found", Toast.LENGTH_LONG).show();
-        }
-    }
-
-
-    public static String urlEncode(String s){
-        try{
-            return URLEncoder.encode(s, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e){
-            Log.d(TAG, "UTF-8 should always be supported", e);
-            throw new RuntimeException("URLEncoder.encode() failed for " + s);
-        }
     }
 
 
