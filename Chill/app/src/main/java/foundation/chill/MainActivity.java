@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
@@ -31,6 +32,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -80,6 +84,7 @@ public class MainActivity extends AppCompatActivity
     TextView locationHyphenTextView;
     ImageView photoImage;
     FloatingActionButton shareFAB;
+    Uri editedImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,9 +112,47 @@ public class MainActivity extends AppCompatActivity
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "FAB BUTTON Clicked");
+                sendTweet();
             }
         });
+    }
+
+    private void sendTweet(){
+
+        Intent tweetIntent = new Intent(Intent.ACTION_SEND);
+        tweetIntent.putExtra(Intent.EXTRA_TEXT, "This is a Test.");
+        tweetIntent.putExtra(Intent.EXTRA_STREAM, editedImageUri);
+        tweetIntent.setType("text/plain");
+
+        PackageManager packManager = getPackageManager();
+        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(tweetIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+
+        boolean resolved = false;
+        for(ResolveInfo resolveInfo: resolvedInfoList){
+            if(resolveInfo.activityInfo.packageName.startsWith("com.twitter.android")){
+                tweetIntent.setClassName(
+                        resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name );
+                resolved = true;
+                break;
+            }
+        }
+        if(resolved){
+            startActivity(tweetIntent);
+        }else{
+            Toast.makeText(MainActivity.this, "Twitter app isn't found", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    public static String urlEncode(String s){
+        try{
+            return URLEncoder.encode(s, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e){
+            Log.d(TAG, "UTF-8 should always be supported", e);
+            throw new RuntimeException("URLEncoder.encode() failed for " + s);
+        }
     }
 
 
@@ -151,7 +194,7 @@ public class MainActivity extends AppCompatActivity
                     startActivityForResult(imageEditorIntent, GET_EDIT_PICTURE);
                     break;
                 case GET_EDIT_PICTURE:
-                    Uri editedImageUri = data.getData();
+                    editedImageUri = data.getData();
                     photoImage.setImageURI(editedImageUri);
                     photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
