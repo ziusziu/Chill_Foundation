@@ -7,9 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -29,11 +27,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.List;
-
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
 import foundation.chill.utilities.CheckInternetConnection;
@@ -51,7 +44,6 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-
     private GoogleApiClient googleApiClient;
     private static Location lastLocation;
     private AddressResultReceiver resultReceiver;
@@ -59,20 +51,13 @@ public class MainActivity extends AppCompatActivity
     private static String latitude;
     private static String longitude;
 
-    private Uri imageUri;
-
-    Button color1Button;
-    Button color2Button;
-    Button color3Button;
-    Button color4Button;
-    TextView snowFallTextView;
-    TextView temperatureTextView;
-    TextView elevationTextView;
-    TextView locationTextView;
-    TextView locationDetailTextView;
-    TextView locationHyphenTextView;
-    ImageView photoImage;
     FloatingActionButton shareFAB;
+    Button color1Button, color2Button, color3Button, color4Button;
+    TextView snowFallTextView, temperatureTextView, elevationTextView, locationTextView,
+            locationDetailTextView, locationHyphenTextView;
+
+    ImageView photoImage;
+    Uri imageUri;
     Uri editedImageUri;
 
     @Override
@@ -87,17 +72,12 @@ public class MainActivity extends AppCompatActivity
         setFabClickListenter();
 
         setGoogleApiClient();
-        checkPermissions();
-
-        resultReceiver = new AddressResultReceiver(new Handler());
-
-        ForecastService.ForecastRx forecast = ForecastService.createRx();
-        callForecastApi(forecast);
+        checkLocationPermissions();
+        getReceiverAddress();
 
 
+        callForecastApi();
     }
-
-
 
 
     private void setImageViewClickListener(){
@@ -108,18 +88,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
     }
-
-    private void setFabClickListenter(){
-        shareFAB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
-            }
-        });
-    }
-
-
-
 
     public void verifyStoragePermissions(Activity activity){
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -132,27 +100,18 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        if(resultCode == RESULT_OK){
-            switch(requestCode){
-                case Constants.TAKE_PICTURE:
-                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
-                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
-                    break;
-                case Constants.GET_EDIT_PICTURE:
-                    editedImageUri = data.getData();
-                    photoImage.setImageURI(editedImageUri);
-                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
-                    break;
-                default: break;
+    private void setFabClickListenter(){
+        shareFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
             }
-        }
-
+        });
     }
 
-    protected void callForecastApi(ForecastService.ForecastRx forecast){
+    protected void callForecastApi(){
+
+        ForecastService.ForecastRx forecast = ForecastService.createRx();
 
         latitude = "-73.723975";
         longitude = "-66.215334";
@@ -187,17 +146,103 @@ public class MainActivity extends AppCompatActivity
                         locationTextView.setText(weather.getHourly().getSummary().toString());
                     }
                 });
+    }
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if(resultCode == RESULT_OK){
+            switch(requestCode){
+                case Constants.TAKE_PICTURE:
+                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
+                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
+                    break;
+                case Constants.GET_EDIT_PICTURE:
+                    editedImageUri = data.getData();
+                    photoImage.setImageURI(editedImageUri);
+                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
+                    break;
+                default: break;
+            }
+        }
 
     }
 
 
-    protected void startIntentService() {
-        Intent intent = new Intent(this, FetchAddressIntentService.class);
-        intent.putExtra(Constants.RECEIVER, resultReceiver);
-        intent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
-        startService(intent);
+
+
+
+
+// ------- Get Location ---------//
+
+    private void setGoogleApiClient() {
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
     }
+
+    private void checkLocationPermissions() {
+        //Ask for permission if we don't have it
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            Manifest.permission.ACCESS_COARSE_LOCATION},
+                    Constants.PERMISSION_ACCESS_COARSE_LOCATION);
+        } else {
+            // Permissions Granted
+            Log.d(TAG, "Permissions Granted");
+            getLatLongCoordinates();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case Constants.PERMISSION_ACCESS_COARSE_LOCATION:
+                if (permissions.length < 0){
+                    return;
+                }
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Permissions Granted");
+                    getLatLongCoordinates();
+                } else {
+                    Toast.makeText(this, "Need device location.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
+
+    private void getLatLongCoordinates() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            if (lastLocation != null) {
+                Log.d(TAG, "Latitude: "+String.valueOf(lastLocation.getLatitude()));
+                Log.d(TAG, "Longitude: "+String.valueOf(lastLocation.getLongitude()));
+            }
+            else {
+                Log.d(TAG, "LastLocation not null");
+            }
+
+        }
+    }
+
+
+
+
+
+
+// ----- Initialization Stuff -----////
+
 
     private void initializeViews() {
         color1Button = (Button) findViewById(R.id.color1_button);
@@ -266,32 +311,10 @@ public class MainActivity extends AppCompatActivity
 
 
 
-    private void setGoogleApiClient() {
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-    }
 
-    private void checkPermissions() {
-        //Ask for permission if we don't have it
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.ACCESS_COARSE_LOCATION},
-                    Constants.PERMISSION_ACCESS_COARSE_LOCATION);
-        } else {
-            // Permissions Granted
-            Log.d(TAG, "Permissions Granted");
-            getLatLongCoordinates();
-        }
-    }
+
+
+
 
     @Override
     protected void onStart() {
@@ -305,6 +328,7 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
+// -------- CHECK INTERNET CONNECTION -----//
 
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -317,53 +341,21 @@ public class MainActivity extends AppCompatActivity
 
         if(lastLocation != null){
             Log.d(TAG, "lastlocation not null");
-            startIntentService();
+            startFetchAddressIntentService();
         }else{
             Log.d(TAG, "lastlocation null");
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case Constants.PERMISSION_ACCESS_COARSE_LOCATION:
-                if (permissions.length < 0){
-                    return;
-                }
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "Permissions Granted");
-                    getLatLongCoordinates();
-                } else {
-                    Toast.makeText(this, "Need device location.", Toast.LENGTH_SHORT).show();
-                }
-                break;
-        }
+    protected void startFetchAddressIntentService() {
+        Intent fetchAddressIntent = new Intent(this, FetchAddressIntentService.class);
+        fetchAddressIntent.putExtra(Constants.RECEIVER, resultReceiver);
+        fetchAddressIntent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
+        startService(fetchAddressIntent);
     }
 
-    private void getLatLongCoordinates() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-            if (lastLocation != null) {
-                Log.d(TAG, "Latitude: "+String.valueOf(lastLocation.getLatitude()));
-                Log.d(TAG, "Longitude: "+String.valueOf(lastLocation.getLongitude()));
-            }
-            else {
-                Log.d(TAG, "LastLocation not null");
-            }
-
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+    private void getReceiverAddress(){
+        resultReceiver = new AddressResultReceiver(new Handler());
     }
 
     @SuppressLint("ParcelCreator")
@@ -380,12 +372,24 @@ public class MainActivity extends AppCompatActivity
             String addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
             Log.d(TAG, "ADDRESS: " + addressOutput);
 
-
             // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
                 Log.d(TAG, "ADDRESS FOUND: "+getString(R.string.address_found));
             }
 
         }
+    }
+
+
+
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
     }
 }

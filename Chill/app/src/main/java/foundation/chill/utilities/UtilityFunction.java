@@ -57,6 +57,8 @@ public class UtilityFunction {
     }
 
 
+
+
     public static Uri takePhoto(Activity activity){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File photo = new File(Environment.getExternalStorageDirectory(), "Pic.jpg");
