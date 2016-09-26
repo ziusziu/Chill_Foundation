@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -20,7 +21,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.List;
 
-import foundation.chill.MainActivity;
 import foundation.chill.R;
 
 /**
@@ -28,6 +28,8 @@ import foundation.chill.R;
  */
 
 public class UtilityFunction {
+
+    private static final String TAG = UtilityFunction.class.getSimpleName();
 
     public static void sendTweet(Activity activity, String bodyText, Uri editedImageUri){
 
@@ -86,6 +88,34 @@ public class UtilityFunction {
     }
 
 
+    public static void postInstagram(Activity activity, String bodyText, Uri editedImageUri){
+
+        Intent instagramIntent = new Intent(Intent.ACTION_SEND);
+        //instagramIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+        instagramIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + editedImageUri));
+        instagramIntent.setType("image/*");
+        instagramIntent.setPackage("com.instagram.android");
+
+        Log.d(TAG, "IMAGE URL: " + editedImageUri);
+        PackageManager packManager = activity.getPackageManager();
+        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(instagramIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+
+        boolean resolved = false;
+        for(ResolveInfo resolveInfo: resolvedInfoList){
+            if(resolveInfo.activityInfo.packageName.startsWith("com.instagram.android")){
+                instagramIntent.setClassName(
+                        resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name );
+                resolved = true;
+                break;
+            }
+        }
+        if(resolved){
+            activity.startActivity(instagramIntent);
+        }else{
+            Toast.makeText(activity.getApplication(), "Instagram app isn't found", Toast.LENGTH_LONG).show();
+        }
+    }
 
 
 
