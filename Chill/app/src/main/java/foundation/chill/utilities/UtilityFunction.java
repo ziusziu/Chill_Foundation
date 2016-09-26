@@ -57,6 +57,38 @@ public class UtilityFunction {
     }
 
 
+    public static void postTumblr(Activity activity, String bodyText, Uri editedImageUri){
+
+        Intent tumblrIntent = new Intent(Intent.ACTION_SEND);
+        tumblrIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+        tumblrIntent.putExtra(Intent.EXTRA_STREAM, editedImageUri);
+        tumblrIntent.setType("image/png");
+        tumblrIntent.setPackage("com.tumblr");
+
+        PackageManager packManager = activity.getPackageManager();
+        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(tumblrIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+
+        boolean resolved = false;
+        for(ResolveInfo resolveInfo: resolvedInfoList){
+            if(resolveInfo.activityInfo.packageName.startsWith("com.tumblr")){
+                tumblrIntent.setClassName(
+                        resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name );
+                resolved = true;
+                break;
+            }
+        }
+        if(resolved){
+            activity.startActivity(tumblrIntent);
+        }else{
+            Toast.makeText(activity.getApplication(), "Tumblr app isn't found", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+
+
+
 
 
     public static Uri takePhoto(Activity activity){
