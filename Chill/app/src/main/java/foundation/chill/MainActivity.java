@@ -104,7 +104,9 @@ public class MainActivity extends AppCompatActivity
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
+                //UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
+                UtilityFunction.postTumblr(MainActivity.this, "Hello", editedImageUri);
+
             }
         });
     }
@@ -236,6 +238,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onStart() {
+        googleApiClient.connect();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        googleApiClient.disconnect();
+        super.onStop();
+    }
 
 
 
@@ -310,23 +323,6 @@ public class MainActivity extends AppCompatActivity
 
 
 
-
-
-
-
-
-
-    @Override
-    protected void onStart() {
-        googleApiClient.connect();
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        googleApiClient.disconnect();
-        super.onStop();
-    }
 
 // -------- CHECK INTERNET CONNECTION -----//
 
