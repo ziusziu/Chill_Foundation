@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity
                 //UtilityFunction.postTumblr(MainActivity.this, "Hello", editedImageUri);
                 //UtilityFunction.postInstagram(MainActivity.this, "Hello", editedImageUri);
                 //UtilityFunction.postSnapChat(MainActivity.this, "Hello", editedImageUri);
+                UtilityFunction.postPinterest(MainActivity.this, "Hello", editedImageUri);
 
             }
         });
