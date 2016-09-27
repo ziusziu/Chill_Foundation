@@ -14,11 +14,13 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import foundation.chill.R;
@@ -116,6 +118,39 @@ public class UtilityFunction {
             Toast.makeText(activity.getApplication(), "Instagram app isn't found", Toast.LENGTH_LONG).show();
         }
     }
+
+
+    public static void postSnapChat(Activity activity, String bodyText, Uri editedImageUri){
+
+        ///------------ Images too large, need to compress ------////
+
+        Intent snapChatIntent = new Intent(Intent.ACTION_SEND);
+        snapChatIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+        snapChatIntent.putExtra(Intent.EXTRA_STREAM, snapChatIntent);
+        snapChatIntent.setType("image/*");
+        snapChatIntent.setPackage("com.snapchat.android");
+
+        Log.d(TAG, "IMAGE URL: " + editedImageUri);
+        PackageManager packManager = activity.getPackageManager();
+        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(snapChatIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+
+        boolean resolved = false;
+        for(ResolveInfo resolveInfo: resolvedInfoList){
+            if(resolveInfo.activityInfo.packageName.startsWith("com.snapchat.android")){
+                snapChatIntent.setClassName(
+                        resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name );
+                resolved = true;
+                break;
+            }
+        }
+        if(resolved){
+            activity.startActivity(snapChatIntent);
+        }else{
+            Toast.makeText(activity.getApplication(), "SnapChat app isn't found", Toast.LENGTH_LONG).show();
+        }
+    }
+
 
 
 
