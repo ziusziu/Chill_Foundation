@@ -1,6 +1,7 @@
 package foundation.chill.utilities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -14,13 +15,13 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 
 import foundation.chill.R;
@@ -153,7 +154,67 @@ public class UtilityFunction {
 
 
 
+    public static void postPinterest(Activity activity, String bodyText, Uri editedImageUri){
 
+        String shareUrl = "";//http://stackoverflow.com/questions/27388056/";
+        String mediaUrl = "http://cdn.sstatic.net/stackexchange/img/logos/so/so-logo.png";
+        String description = "test";
+        String url = String.format(
+                "https://www.pinterest.com/pin/create/button/?url=%s&media=%s&description=%s",
+                urlEncode(shareUrl), urlEncode(mediaUrl), description);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        filterByPackageName(activity, intent, "com.pinterest");
+        activity.startActivity(intent);
+
+//        Intent pinterestIntent = new Intent(Intent.ACTION_SEND);
+//        //pinterestIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+//        pinterestIntent.putExtra("com.pinterest.EXTRA_DESCRIPTION",bodyText);
+//        pinterestIntent.putExtra(Intent.EXTRA_STREAM, pinterestIntent);
+//        pinterestIntent.setType("image/*");
+//        pinterestIntent.setPackage("com.pinterst");
+//
+//        Log.d(TAG, "IMAGE URL: " + editedImageUri);
+//        PackageManager packManager = activity.getPackageManager();
+//        List<ResolveInfo> resolvedInfoList = packManager.queryIntentActivities(pinterestIntent,  PackageManager.MATCH_DEFAULT_ONLY);
+//
+//        boolean resolved = false;
+//        for(ResolveInfo resolveInfo: resolvedInfoList){
+//            if(resolveInfo.activityInfo.packageName.startsWith("com.pinterest")){
+//                pinterestIntent.setClassName(
+//                        resolveInfo.activityInfo.packageName,
+//                        resolveInfo.activityInfo.name );
+//                resolved = true;
+//                break;
+//            }
+//        }
+//        if(resolved){
+//            activity.startActivity(pinterestIntent);
+//        }else{
+//            Toast.makeText(activity.getApplication(), "Pinterst app isn't found", Toast.LENGTH_LONG).show();
+//        }
+    }
+
+
+
+    public static void filterByPackageName(Context context, Intent intent, String prefix) {
+        List<ResolveInfo> matches = context.getPackageManager().queryIntentActivities(intent, 0);
+        for (ResolveInfo info : matches) {
+            if (info.activityInfo.packageName.toLowerCase().startsWith(prefix)) {
+                intent.setPackage(info.activityInfo.packageName);
+                return;
+            }
+        }
+    }
+
+    public static String urlEncode(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+            Log.wtf("", "UTF-8 should always be supported", e);
+            return "";
+        }
+    }
 
 
     public static Uri takePhoto(Activity activity){
