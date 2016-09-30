@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -26,8 +27,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +40,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -138,18 +144,52 @@ public class MainActivity extends AppCompatActivity
 
 
     private void setFabClickListenter(){
+
+
+
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //UtilityFunction.sendTweet(MainActivity.this, "Hello", editedImageUri);
+                saveBitmap(takeScreenshot(view));
+                File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                File imagePath1 = new File(pix, "screenshot.jpg");
+                Uri imagePath1Uri = Uri.fromFile(imagePath1);
+                UtilityFunction.sendTweet(MainActivity.this, "Hello", imagePath1Uri);
                 //UtilityFunction.postTumblr(MainActivity.this, "Hello", editedImageUri);
                 //UtilityFunction.postInstagram(MainActivity.this, "Hello", editedImageUri);
                 //UtilityFunction.postSnapChat(MainActivity.this, "Hello", editedImageUri);
-                UtilityFunction.postPinterest(MainActivity.this, "Hello", editedImageUri);
+                //UtilityFunction.postPinterest(MainActivity.this, "Hello", editedImageUri);
 
             }
         });
     }
+
+    public Bitmap takeScreenshot(View view) {
+        View rootView = view.getRootView();
+        rootView.setDrawingCacheEnabled(true);
+        rootView.buildDrawingCache(true);
+        Bitmap b1 = Bitmap.createBitmap(rootView.getDrawingCache(true));
+        rootView.setDrawingCacheEnabled(false); // clear drawing cache
+        return b1;
+    }
+
+    public void saveBitmap(Bitmap bitmap) {
+        if (bitmap == null) {
+            return;
+        }
+        File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File imagePath1 = new File(pix, "screenshot.jpg");
+        FileOutputStream fos;
+        try {
+            fos = new FileOutputStream(imagePath1);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            Log.e("GREC", e.getMessage(), e);
+        }
+    }
+
 
     protected void callForecastApi(){
 
