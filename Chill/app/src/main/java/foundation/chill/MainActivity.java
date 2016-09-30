@@ -9,13 +9,18 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.os.ResultReceiver;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -60,12 +65,16 @@ public class MainActivity extends AppCompatActivity
     Uri imageUri;
     Uri editedImageUri;
 
+    Toolbar toolbar;
+    ActionBar actionBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         initializeViews();
+        initActionBar();
         initColorButtons();
 
         setImageViewClickListener();
@@ -77,6 +86,12 @@ public class MainActivity extends AppCompatActivity
 
 
         callForecastApi();
+    }
+
+    private void initActionBar(){
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("Chill");
     }
 
 
@@ -261,6 +276,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void initializeViews() {
+        toolbar = (Toolbar)findViewById(R.id.toolbar);
         color1Button = (Button) findViewById(R.id.color1_button);
         color2Button = (Button) findViewById(R.id.color2_button);
         color3Button = (Button) findViewById(R.id.color3_button);
@@ -390,5 +406,23 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.action_camera:
+                Log.d(TAG, "Camera Clicked");
+                verifyStoragePermissions(MainActivity.this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
