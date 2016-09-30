@@ -3,11 +3,15 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -31,6 +35,8 @@ import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import java.io.ByteArrayOutputStream;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -60,6 +66,8 @@ public class MainActivity extends AppCompatActivity
     Button color1Button, color2Button, color3Button, color4Button;
     TextView snowFallTextView, temperatureTextView, elevationTextView, locationTextView,
             locationDetailTextView, locationHyphenTextView;
+
+    String addressOutput;
 
     ImageView photoImage;
     Uri imageUri;
@@ -95,13 +103,27 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+
     private void setImageViewClickListener(){
+
+        Bitmap bitmap = ((BitmapDrawable)photoImage.getDrawable()).getBitmap();
+        Uri imageViewUri = getImageUri(getApplicationContext(), bitmap);
+
         photoImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                verifyStoragePermissions(MainActivity.this);
+                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(imageViewUri).build();
+                startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
+                //verifyStoragePermissions(MainActivity.this);
             }
         });
+    }
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
     }
 
     public void verifyStoragePermissions(Activity activity){
@@ -168,7 +190,7 @@ public class MainActivity extends AppCompatActivity
                         temperatureTextView.setText(String.valueOf(weather.getCurrently().getApparentTemperature()));
                         elevationTextView.setText("ELEVATION");
                         locationTextView.setText(weather.getHourly().getSummary().toString());
-                        locationDetailTextView.setText(weather.getCurrently().getSummary());
+                        locationDetailTextView.setText(addressOutput);
 
                     }
                 });
@@ -390,7 +412,7 @@ public class MainActivity extends AppCompatActivity
 
             // Display the address string
             // or an error message sent from the intent service.
-            String addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
+            addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
             Log.d(TAG, "ADDRESS: " + addressOutput);
 
             // Show a toast message if an address was found.
