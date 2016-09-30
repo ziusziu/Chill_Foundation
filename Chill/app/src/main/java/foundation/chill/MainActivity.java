@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public Bitmap takeScreenshot(View view) {
-        View rootView = view.getRootView();
+        View rootView = view.getRootView().findViewById(R.id.photo_container);
         rootView.setDrawingCacheEnabled(true);
         rootView.buildDrawingCache(true);
         Bitmap b1 = Bitmap.createBitmap(rootView.getDrawingCache(true));
