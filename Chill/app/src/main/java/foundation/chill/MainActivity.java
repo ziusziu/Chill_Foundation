@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -72,13 +73,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        toolbar = (Toolbar)findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        actionBar = getSupportActionBar();
-        actionBar.setTitle("Main Fragment");
-
-
         initializeViews();
+        initActionBar();
         initColorButtons();
 
         setImageViewClickListener();
@@ -90,6 +86,12 @@ public class MainActivity extends AppCompatActivity
 
 
         callForecastApi();
+    }
+
+    private void initActionBar(){
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("Chill");
     }
 
 
@@ -274,6 +276,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void initializeViews() {
+        toolbar = (Toolbar)findViewById(R.id.toolbar);
         color1Button = (Button) findViewById(R.id.color1_button);
         color2Button = (Button) findViewById(R.id.color2_button);
         color3Button = (Button) findViewById(R.id.color3_button);
@@ -411,4 +414,15 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.action_camera:
+                Log.d(TAG, "Camera Clicked");
+                verifyStoragePermissions(MainActivity.this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 }
