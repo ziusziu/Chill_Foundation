@@ -163,7 +163,13 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onNext(Weather weather) {
                         Timber.d("TimeZone: " + weather.getTimezone());
+
+                        snowFallTextView.setText(weather.getCurrently().getPrecipType() + " " + String.valueOf(weather.getCurrently().getPrecipIntensity()));
+                        temperatureTextView.setText(String.valueOf(weather.getCurrently().getApparentTemperature()));
+                        elevationTextView.setText("ELEVATION");
                         locationTextView.setText(weather.getHourly().getSummary().toString());
+                        locationDetailTextView.setText(weather.getCurrently().getSummary());
+
                     }
                 });
     }
@@ -394,8 +400,6 @@ public class MainActivity extends AppCompatActivity
 
         }
     }
-
-
 
 
     @Override
