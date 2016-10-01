@@ -8,12 +8,15 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -33,6 +36,7 @@ import foundation.chill.R;
 public class UtilityFunction {
 
     private static final String TAG = UtilityFunction.class.getSimpleName();
+    private static final int FAB_COLOR = R.color.colorAccent;
 
     public static void sendTweet(Activity activity, String bodyText, Uri editedImageUri){
 
@@ -227,9 +231,16 @@ public class UtilityFunction {
     }
 
 
+    public static int convertColorHexToResource(String hexColor){
+        return Color.parseColor(hexColor);
+    }
 
+    public static void setFabButton(Context context, FloatingActionButton fab, int icon) {
+        int color = ContextCompat.getColor(context, FAB_COLOR);
 
-
+        fab.setImageResource(icon);
+        fab.setColorFilter(color);
+    }
 
 
 
