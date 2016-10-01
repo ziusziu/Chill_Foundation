@@ -106,8 +106,6 @@ public class MainActivity extends AppCompatActivity
         initAnimations();
         loadAnimations();
 
-
-
     }
 
     private void initActionBar(){
@@ -173,11 +171,11 @@ public class MainActivity extends AppCompatActivity
                 File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                 File imagePath1 = new File(pix, "screenshot.jpg");
                 Uri imagePath1Uri = Uri.fromFile(imagePath1);
-                UtilityFunction.sendTweet(MainActivity.this, "Hello", imagePath1Uri);
-                //UtilityFunction.postTumblr(MainActivity.this, "Hello", editedImageUri);
-                //UtilityFunction.postInstagram(MainActivity.this, "Hello", editedImageUri);
-                //UtilityFunction.postSnapChat(MainActivity.this, "Hello", editedImageUri);
-                //UtilityFunction.postPinterest(MainActivity.this, "Hello", editedImageUri);
+                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
 
             }
         });
