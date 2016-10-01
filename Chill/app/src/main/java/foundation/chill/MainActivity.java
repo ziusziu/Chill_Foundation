@@ -7,7 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
@@ -23,6 +25,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -477,6 +481,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
+
+        for(int iconIndex = 0; iconIndex < menu.size(); iconIndex++){
+            Drawable drawable = menu.getItem(iconIndex).getIcon();
+            if(drawable != null) {
+                drawable.mutate();
+                int menuIconColor = ContextCompat.getColor(getApplicationContext(), R.color.colorAccent);
+                drawable.setColorFilter(menuIconColor, PorterDuff.Mode.SRC_ATOP );
+            }
+        }
+
         return true;
     }
 
