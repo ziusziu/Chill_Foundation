@@ -3,6 +3,7 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -47,6 +48,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -144,6 +146,7 @@ public class MainActivity extends AppCompatActivity
         photoImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Photot Clicked" + editedImageUri);
                 Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                 //verifyStoragePermissions(MainActivity.this);
@@ -176,10 +179,12 @@ public class MainActivity extends AppCompatActivity
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Send Clicked " + editedImageUri);
                 saveBitmap(takeScreenshot(view));
                 File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                 File imagePath1 = new File(pix, "screenshot.jpg");
                 Uri imagePath1Uri = Uri.fromFile(imagePath1);
+                Log.d(TAG, "Share Image uri " + imagePath1Uri);
                 //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
                 //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
                 UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
@@ -274,6 +279,13 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case Constants.GET_EDIT_PICTURE:
                     editedImageUri = data.getData();
+                    Log.d(TAG, "Picture Take " + editedImageUri);
+                    try {
+                        editedImageUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), editedImageUri.toString(), null, null));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
                     photoImage.setImageURI(editedImageUri);
                     photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
@@ -520,15 +532,24 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
             case R.id.action_camera:
-                Log.d(TAG, "Camera Clicked");
+                Log.d(TAG, "Camera Clicked " + editedImageUri);
                 verifyStoragePermissions(MainActivity.this);
                 return true;
             case R.id.action_print:
-                Log.d(TAG, "Printer Clicked");
+
                 photoPrinter.setScaleMode(PrintHelper.SCALE_MODE_FIT);
                 try {
-                    photoPrinter.printBitmap("Image", editedImageUri);
+                    if(!editedImageUri.toString().contains("content://")){
+                        //editedImageUri = Uri.parse("file:/"+editedImageUri.toString());
+                    }
+                    Log.d(TAG, "Printer Clicked " + editedImageUri);
+                    InputStream is = getContentResolver().openInputStream(editedImageUri);
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+                    is.close();
+                    photoPrinter.printBitmap("Image", bitmap);
                 } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
 
