@@ -180,20 +180,22 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "Send Clicked " + editedImageUri);
+
                 saveBitmap(takeScreenshot(view));
-                File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                File imagePath1 = new File(pix, "screenshot.jpg");
-                Uri imagePath1Uri = Uri.fromFile(imagePath1);
-                Log.d(TAG, "Share Image uri " + imagePath1Uri);
-                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                Uri imagePathFileUri = getScreenshotFileUri();
+
+                Log.d(TAG, "Share Image uri " + imagePathFileUri);
+                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
 
             }
         });
     }
+
+
 
     public Bitmap takeScreenshot(View view) {
         View rootView = view.getRootView().findViewById(R.id.photo_container);
@@ -221,6 +223,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public Uri getScreenshotFileUri(){
+        File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File imagePath1 = new File(pix, "screenshot.jpg");
+        return Uri.fromFile(imagePath1);
+    }
 
     protected void callForecastApi(){
 
@@ -280,11 +287,9 @@ public class MainActivity extends AppCompatActivity
                 case Constants.GET_EDIT_PICTURE:
                     editedImageUri = data.getData();
                     Log.d(TAG, "Picture Take " + editedImageUri);
-                    try {
-                        editedImageUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), editedImageUri.toString(), null, null));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+
+                    editedImageUri = moveToContentProvider(editedImageUri);
+
                     Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
                     photoImage.setImageURI(editedImageUri);
                     photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -296,7 +301,14 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
+    private Uri moveToContentProvider(Uri uri){
+        try{
+            return Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return uri;
+    }
 
 
 
@@ -539,20 +551,15 @@ public class MainActivity extends AppCompatActivity
 
                 photoPrinter.setScaleMode(PrintHelper.SCALE_MODE_FIT);
                 try {
-                    if(!editedImageUri.toString().contains("content://")){
-                        //editedImageUri = Uri.parse("file:/"+editedImageUri.toString());
-                    }
-
+                    
                     saveBitmap(takeScreenshot(findViewById(R.id.photo_container)));
-                    File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                    File imagePath1 = new File(pix, "screenshot.jpg");
-                    Uri imagePath1Uri = Uri.fromFile(imagePath1);
-                    editedImageUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), imagePath1Uri.getPath(), null, null));
 
+                    Uri imagePathPrinterFileUri = getScreenshotFileUri();
+                    Uri printerEditedImageUri = moveToContentProvider(imagePathPrinterFileUri);
 
-                    Log.d(TAG, "Printer Clicked " + editedImageUri);
+                    Log.d(TAG, "Printer Clicked " + printerEditedImageUri);
 
-                    InputStream is = getContentResolver().openInputStream(editedImageUri);
+                    InputStream is = getContentResolver().openInputStream(printerEditedImageUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(is);
                     is.close();
                     photoPrinter.printBitmap("Image", bitmap);
