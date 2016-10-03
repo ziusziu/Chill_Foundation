@@ -139,12 +139,12 @@ public class MainActivity extends AppCompatActivity
     private void setImageViewClickListener(){
 
         Bitmap bitmap = ((BitmapDrawable)photoImage.getDrawable()).getBitmap();
-        Uri imageViewUri = getImageUri(getApplicationContext(), bitmap);
+        editedImageUri = getImageUri(getApplicationContext(), bitmap);
 
         photoImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(imageViewUri).build();
+                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                 //verifyStoragePermissions(MainActivity.this);
             }
