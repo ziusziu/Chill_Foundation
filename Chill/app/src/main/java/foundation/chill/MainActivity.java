@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        photoPrinter = new PrintHelper(getApplicationContext());
+        photoPrinter = new PrintHelper(MainActivity.this);
 
         initializeViews();
         initActionBar();
@@ -527,7 +527,7 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "Printer Clicked");
                 photoPrinter.setScaleMode(PrintHelper.SCALE_MODE_FIT);
                 try {
-                    photoPrinter.printBitmap("Image", imageUri);
+                    photoPrinter.printBitmap("Image", editedImageUri);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
