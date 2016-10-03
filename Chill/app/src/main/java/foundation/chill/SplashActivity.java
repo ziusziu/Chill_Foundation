@@ -11,7 +11,9 @@ public class SplashActivity extends AppCompatActivity {
 
     private static boolean splashLoaded = false;
     RelativeLayout splashLayout;
-//    private TextView textView;
+
+    Runnable run;
+    Handler handler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -19,21 +21,27 @@ public class SplashActivity extends AppCompatActivity {
         if (!splashLoaded) {
             setContentView(R.layout.activity_splash);
             splashLayout = (RelativeLayout)findViewById(R.id.activity_splash);
-            splashLayout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
-                }
-            });
-            int secondsDelayed = 1;
-//            setFont();
 
-            new Handler().postDelayed(new Runnable() {
+            int secondsDelayed = 1;
+
+            run = new Runnable(){
+                @Override
                 public void run() {
                     startActivity(new Intent(SplashActivity.this, MainActivity.class));
                     finish();
                 }
-            }, secondsDelayed * 10000);
+            };
+            handler = new Handler();
+            handler.postDelayed(run, secondsDelayed * 5000);
+            
+            splashLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    handler.removeCallbacks(run);
+                }
+            });
+
 
             splashLoaded = true;
         }
