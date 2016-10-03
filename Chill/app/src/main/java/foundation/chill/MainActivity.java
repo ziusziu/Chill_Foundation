@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -20,6 +21,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.os.ResultReceiver;
+import android.support.v4.print.PrintHelper;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -42,6 +44,7 @@ import com.google.android.gms.location.LocationServices;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -56,6 +59,8 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
+
+import static android.R.attr.bitmap;
 
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -85,10 +90,14 @@ public class MainActivity extends AppCompatActivity
     Toolbar toolbar;
     ActionBar actionBar;
 
+    PrintHelper photoPrinter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        photoPrinter = new PrintHelper(getApplicationContext());
 
         initializeViews();
         initActionBar();
@@ -513,6 +522,16 @@ public class MainActivity extends AppCompatActivity
             case R.id.action_camera:
                 Log.d(TAG, "Camera Clicked");
                 verifyStoragePermissions(MainActivity.this);
+                return true;
+            case R.id.action_print:
+                Log.d(TAG, "Printer Clicked");
+                photoPrinter.setScaleMode(PrintHelper.SCALE_MODE_FIT);
+                try {
+                    photoPrinter.printBitmap("Image", imageUri);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
