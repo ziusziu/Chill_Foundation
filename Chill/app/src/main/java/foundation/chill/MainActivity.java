@@ -542,7 +542,16 @@ public class MainActivity extends AppCompatActivity
                     if(!editedImageUri.toString().contains("content://")){
                         //editedImageUri = Uri.parse("file:/"+editedImageUri.toString());
                     }
+
+                    saveBitmap(takeScreenshot(findViewById(R.id.photo_container)));
+                    File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                    File imagePath1 = new File(pix, "screenshot.jpg");
+                    Uri imagePath1Uri = Uri.fromFile(imagePath1);
+                    editedImageUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), imagePath1Uri.getPath(), null, null));
+
+
                     Log.d(TAG, "Printer Clicked " + editedImageUri);
+
                     InputStream is = getContentResolver().openInputStream(editedImageUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(is);
                     is.close();
