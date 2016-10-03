@@ -3,10 +3,12 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -20,6 +22,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.os.ResultReceiver;
+import android.support.v4.print.PrintHelper;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -42,8 +45,10 @@ import com.google.android.gms.location.LocationServices;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -56,6 +61,8 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
+
+import static android.R.attr.bitmap;
 
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -85,10 +92,14 @@ public class MainActivity extends AppCompatActivity
     Toolbar toolbar;
     ActionBar actionBar;
 
+    PrintHelper photoPrinter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        photoPrinter = new PrintHelper(MainActivity.this);
 
         initializeViews();
         initActionBar();
@@ -130,12 +141,13 @@ public class MainActivity extends AppCompatActivity
     private void setImageViewClickListener(){
 
         Bitmap bitmap = ((BitmapDrawable)photoImage.getDrawable()).getBitmap();
-        Uri imageViewUri = getImageUri(getApplicationContext(), bitmap);
+        editedImageUri = getImageUri(getApplicationContext(), bitmap);
 
         photoImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(imageViewUri).build();
+                Log.d(TAG, "Photot Clicked" + editedImageUri);
+                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                 //verifyStoragePermissions(MainActivity.this);
             }
@@ -167,19 +179,23 @@ public class MainActivity extends AppCompatActivity
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Send Clicked " + editedImageUri);
+
                 saveBitmap(takeScreenshot(view));
-                File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                File imagePath1 = new File(pix, "screenshot.jpg");
-                Uri imagePath1Uri = Uri.fromFile(imagePath1);
-                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
-                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePath1Uri);
+                Uri imagePathFileUri = getScreenshotFileUri();
+
+                Log.d(TAG, "Share Image uri " + imagePathFileUri);
+                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
 
             }
         });
     }
+
+
 
     public Bitmap takeScreenshot(View view) {
         View rootView = view.getRootView().findViewById(R.id.photo_container);
@@ -207,6 +223,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public Uri getScreenshotFileUri(){
+        File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File imagePath1 = new File(pix, "screenshot.jpg");
+        return Uri.fromFile(imagePath1);
+    }
 
     protected void callForecastApi(){
 
@@ -265,6 +286,11 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case Constants.GET_EDIT_PICTURE:
                     editedImageUri = data.getData();
+                    Log.d(TAG, "Picture Take " + editedImageUri);
+
+                    editedImageUri = moveToContentProvider(editedImageUri);
+
+                    Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
                     photoImage.setImageURI(editedImageUri);
                     photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
@@ -275,7 +301,14 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
+    private Uri moveToContentProvider(Uri uri){
+        try{
+            return Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return uri;
+    }
 
 
 
@@ -511,8 +544,31 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
             case R.id.action_camera:
-                Log.d(TAG, "Camera Clicked");
+                Log.d(TAG, "Camera Clicked " + editedImageUri);
                 verifyStoragePermissions(MainActivity.this);
+                return true;
+            case R.id.action_print:
+
+                photoPrinter.setScaleMode(PrintHelper.SCALE_MODE_FIT);
+                try {
+                    
+                    saveBitmap(takeScreenshot(findViewById(R.id.photo_container)));
+
+                    Uri imagePathPrinterFileUri = getScreenshotFileUri();
+                    Uri printerEditedImageUri = moveToContentProvider(imagePathPrinterFileUri);
+
+                    Log.d(TAG, "Printer Clicked " + printerEditedImageUri);
+
+                    InputStream is = getContentResolver().openInputStream(printerEditedImageUri);
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+                    is.close();
+                    photoPrinter.printBitmap("Image", bitmap);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
