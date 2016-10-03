@@ -28,5 +28,6 @@ public final class Constants {
     public static final int TAKE_PICTURE = 1;
     public static final int GET_EDIT_PICTURE = 2;
 
+    public static final int RESULT_LOAD_IMAGE = 3;
 
 }

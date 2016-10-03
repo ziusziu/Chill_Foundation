@@ -3,10 +3,10 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
@@ -62,8 +62,6 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
-import static android.R.attr.bitmap;
-
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity
 
     String addressOutput;
 
-    ImageView photoImage;
+    ImageView photoImageView;
     Uri imageUri;
     Uri editedImageUri;
 
@@ -140,10 +138,10 @@ public class MainActivity extends AppCompatActivity
 
     private void setImageViewClickListener(){
 
-        Bitmap bitmap = ((BitmapDrawable)photoImage.getDrawable()).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
         editedImageUri = getImageUri(getApplicationContext(), bitmap);
 
-        photoImage.setOnClickListener(new View.OnClickListener() {
+        photoImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "Photot Clicked" + editedImageUri);
@@ -291,11 +289,23 @@ public class MainActivity extends AppCompatActivity
                     editedImageUri = moveToContentProvider(editedImageUri);
 
                     Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
-                    photoImage.setImageURI(editedImageUri);
-                    photoImage.setScaleType(ImageView.ScaleType.FIT_XY);
+                    photoImageView.setImageURI(editedImageUri);
+                    photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
                 default: break;
             }
+
+            if (requestCode == Constants.RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String picturePath = cursor.getString(columnIndex);
+                cursor.close();
+                photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+            }
+
         }
 
     }
@@ -405,7 +415,7 @@ public class MainActivity extends AppCompatActivity
         locationTextView = (TextView) findViewById(R.id.location1_textView);
         locationDetailTextView = (TextView) findViewById(R.id.location2_textView);
         locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
-        photoImage = (ImageView) findViewById(R.id.photo_imageView);
+        photoImageView = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
     }
 
@@ -568,6 +578,11 @@ public class MainActivity extends AppCompatActivity
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                return true;
+            case R.id.action_photo_library:
+                Intent photoLibraryIntent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(photoLibraryIntent, Constants.RESULT_LOAD_IMAGE);
 
                 return true;
             default:
