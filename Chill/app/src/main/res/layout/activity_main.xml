@@ -35,6 +35,8 @@
             android:id="@+id/photo_imageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
             android:src="@drawable/android_arms"/>
 
         <TextView
