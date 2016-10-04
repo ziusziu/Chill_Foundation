@@ -51,14 +51,37 @@
             android:textColor="@color/colorNeon"
             android:text="CHILL"/>
 
+
+        <LinearLayout
+            android:id="@+id/logo_linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="40dp"
+            android:layout_marginLeft="20dp"
+            android:layout_alignParentBottom="true">
+
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/chill_buckhorn_logo"
+                android:layout_marginBottom="10dp"
+                android:layout_marginRight="13dp"/>
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/chill_logo"
+                android:layout_marginBottom="10dp"/>
+
+        </LinearLayout>
+
         <LinearLayout
             android:id="@+id/location_linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="20dp"
             android:layout_marginLeft="20dp"
-            android:layout_alignParentBottom="true">
+            android:layout_above="@+id/logo_linearLayout">
 
             <TextView
                 android:id="@+id/location1_textView"
