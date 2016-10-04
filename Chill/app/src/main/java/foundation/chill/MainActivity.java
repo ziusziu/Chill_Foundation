@@ -35,6 +35,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +79,7 @@ public class MainActivity extends AppCompatActivity
     Button color1Button, color2Button, color3Button, color4Button;
     TextView snowFallTextView, temperatureTextView, elevationTextView, locationTextView,
             locationDetailTextView, locationHyphenTextView;
+    LinearLayout logoImagesLayout;
 
     Animation bounceRightToLeftAnimation;
 
@@ -134,6 +136,7 @@ public class MainActivity extends AppCompatActivity
         locationTextView.startAnimation(bounceRightToLeftAnimation);
         locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
         locationDetailTextView.startAnimation(bounceRightToLeftAnimation);
+        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
     }
 
     private void setImageViewClickListener(){
@@ -417,6 +420,7 @@ public class MainActivity extends AppCompatActivity
         locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
         photoImageView = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
+        logoImagesLayout = (LinearLayout) findViewById(R.id.logo_linearLayout);
     }
 
     private void initColorButtons() {
