@@ -251,7 +251,7 @@ public class UtilityFunction {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
-                imageView.setImageBitmap(changeBitmapContrastBrightness(BitmapFactory.decodeResource(activity.getResources(), R.drawable.android_arms), (float) progress / 100f, 1));
+                imageView.setImageBitmap(changeBitmapContrastBrightness(BitmapFactory.decodeResource(activity.getResources(), R.drawable.chill_default_image), (float) progress / 100f, 1));
                 //textView.setText("Contrast: "+(float) progress / 100f);
             }
 
