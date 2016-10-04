@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity
     private void initActionBar(){
         setSupportActionBar(toolbar);
         actionBar = getSupportActionBar();
-        actionBar.setTitle("Chill");
+        actionBar.setTitle("Chill Foundation");
     }
 
     private void initAnimations(){
