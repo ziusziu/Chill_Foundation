@@ -164,7 +164,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_dialog_email"
+        android:src="@drawable/ic_logo_instagram"
         android:tint="@color/colorPrimary"/>
 
 </android.support.design.widget.CoordinatorLayout>
