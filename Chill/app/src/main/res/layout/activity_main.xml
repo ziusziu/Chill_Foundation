@@ -53,76 +53,6 @@
 
 
         <LinearLayout
-            android:id="@+id/location_linearLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="20dp"
-            android:layout_above="@+id/logo_linearLayout">
-
-            <TextView
-                android:id="@+id/location1_textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:text="BEAR MOUNTAIN"
-                android:textColor="@color/colorNeon"
-                android:includeFontPadding="false"/>
-
-            <TextView
-                android:id="@+id/locationHyphen_textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" - "
-                android:textColor="@color/colorNeon"
-                android:includeFontPadding="false"/>
-
-            <TextView
-                android:id="@+id/location2_textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BIG BEAR LAKE"
-                android:textColor="@color/colorNeon"
-                android:includeFontPadding="false"/>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/elevation_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:textStyle="bold"
-            android:textSize="40sp"
-            android:text="ELEVATION"
-            android:textColor="@color/colorNeon"
-            android:layout_above="@id/location_linearLayout"
-            android:includeFontPadding="false"/>
-
-        <TextView
-            android:id="@+id/temperature_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:textStyle="bold"
-            android:textSize="40sp"
-            android:text="TEMPERATURE"
-            android:textColor="@color/colorNeon"
-            android:layout_above="@id/elevation_textView"
-            android:includeFontPadding="false"/>
-
-        <TextView
-            android:id="@+id/snowfall_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:textStyle="bold"
-            android:textSize="40sp"
-            android:text="SNOWFALL"
-            android:textColor="@color/colorNeon"
-            android:includeFontPadding="false"
-            android:layout_above="@id/temperature_textView"/>
-
-        <LinearLayout
             android:id="@+id/logo_linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -144,6 +74,69 @@
                 android:layout_marginBottom="10dp"/>
 
         </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/weatherSummary_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:layout_marginLeft="20dp"
+            android:layout_above="@id/logo_linearLayout"
+            android:text="WEATHER SUMMARY"
+            android:textColor="@color/colorNeon"
+            android:textSize="25sp"
+            android:includeFontPadding="false"/>
+
+
+        <TextView
+            android:id="@+id/location_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="BIG BEAR LAKE"
+            android:layout_above="@id/weatherSummary_textView"
+            android:textColor="@color/colorNeon"
+            android:textSize="25sp"
+            android:includeFontPadding="false"/>
+
+        <TextView
+            android:id="@+id/snowfall_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:textStyle="bold"
+            android:textSize="40sp"
+            android:text="SNOWFALL"
+            android:textColor="@color/colorNeon"
+            android:includeFontPadding="false"
+            android:layout_above="@id/location_textView"/>
+
+        <TextView
+            android:id="@+id/elevation_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:textStyle="bold"
+            android:textSize="40sp"
+            android:text="ELEVATION"
+            android:textColor="@color/colorNeon"
+            android:layout_above="@id/snowfall_textView"
+            android:includeFontPadding="false"/>
+
+        <TextView
+            android:id="@+id/temperature_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:textStyle="bold"
+            android:textSize="40sp"
+            android:text="TEMPERATURE"
+            android:textColor="@color/colorNeon"
+            android:layout_above="@id/elevation_textView"
+            android:includeFontPadding="false"/>
+
+
 
     </RelativeLayout>
 

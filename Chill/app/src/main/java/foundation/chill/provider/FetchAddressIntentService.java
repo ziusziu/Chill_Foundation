@@ -60,8 +60,8 @@ public class FetchAddressIntentService extends IntentService {
 
         try {
             addresses = geocoder.getFromLocation(
-                    34.2284424, //location.getLatitude(), //34.2284424
-                    -116.861480, //location.getLongitude(), //-116.861480
+                    location.getLatitude(), //34.2284424
+                    location.getLongitude(), //-116.861480
                     // In this sample, get just a single address.
                     1);
         } catch (IOException ioException) {
@@ -90,9 +90,11 @@ public class FetchAddressIntentService extends IntentService {
 
             // Fetch the address lines using getAddressLine,
             // join them, and send them to the thread.
-            for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
-                addressFragments.add(address.getAddressLine(i));
-            }
+//            for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+//                addressFragments.add(address.getAddressLine(i));
+//            }
+
+            addressFragments.add(address.getLocality());
             Log.i(TAG, getString(R.string.address_found));
             deliverResultToReceiver(Constants.SUCCESS_RESULT,
                     TextUtils.join(System.getProperty("line.separator"),
