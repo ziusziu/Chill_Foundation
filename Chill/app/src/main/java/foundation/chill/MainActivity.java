@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -35,13 +36,23 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,8 +60,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import foundation.chill.model.forecast.Weather;
+import foundation.chill.model.forecast.WeatherInfo;
 import foundation.chill.provider.ForecastService;
 import foundation.chill.utilities.CheckInternetConnection;
 import foundation.chill.utilities.Constants;
@@ -63,11 +76,13 @@ import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
     private static Location lastLocation;
     private AddressResultReceiver resultReceiver;
 
@@ -76,8 +91,9 @@ public class MainActivity extends AppCompatActivity
 
     FloatingActionButton shareFAB;
     Button color1Button, color2Button, color3Button, color4Button;
-    TextView snowFallTextView, temperatureTextView, elevationTextView, locationTextView,
-            locationDetailTextView, locationHyphenTextView;
+    TextView snowFallTextView, temperatureTextView, elevationTextView, weatherSummaryTextView,
+            locationTextView, locationHyphenTextView;
+    LinearLayout logoImagesLayout;
 
     Animation bounceRightToLeftAnimation;
 
@@ -96,6 +112,9 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setGoogleApiClient();
+        googleApiClient.connect();
+
 
         photoPrinter = new PrintHelper(MainActivity.this);
 
@@ -106,11 +125,10 @@ public class MainActivity extends AppCompatActivity
         setImageViewClickListener();
         setFabClickListenter();
 
-        setGoogleApiClient();
         checkLocationPermissions();
         getReceiverAddress();
 
-        callForecastApi();
+//        callForecastApi();
 
         initAnimations();
         loadAnimations();
@@ -131,23 +149,26 @@ public class MainActivity extends AppCompatActivity
         snowFallTextView.startAnimation(bounceRightToLeftAnimation);
         temperatureTextView.startAnimation(bounceRightToLeftAnimation);
         elevationTextView.startAnimation(bounceRightToLeftAnimation);
+        weatherSummaryTextView.startAnimation(bounceRightToLeftAnimation);
+//        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
         locationTextView.startAnimation(bounceRightToLeftAnimation);
-        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
-        locationDetailTextView.startAnimation(bounceRightToLeftAnimation);
+        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
     }
+
 
     private void setImageViewClickListener(){
 
         Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
         editedImageUri = getImageUri(getApplicationContext(), bitmap);
 
-        photoImageView.setOnClickListener(new View.OnClickListener() {
+        photoImageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onLongClick(View view) {
                 Log.d(TAG, "Photot Clicked" + editedImageUri);
                 Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                 //verifyStoragePermissions(MainActivity.this);
+                return false;
             }
         });
     }
@@ -231,8 +252,8 @@ public class MainActivity extends AppCompatActivity
 
         ForecastService.ForecastRx forecast = ForecastService.createRx();
 
-        latitude = "-73.723975";
-        longitude = "-66.215334";
+    //    latitude = "-73.723975";
+    //    longitude = "-66.215334";
 
         Timber.d("PRINT LATITUDE AND LONGITUDE " + latitude + " " + longitude);
         if(latitude.equals("0.0") & longitude.equals("0.0")){
@@ -260,13 +281,61 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onNext(Weather weather) {
+                        Timber.d("------------");
                         Timber.d("TimeZone: " + weather.getTimezone());
+                        Timber.d("Offset: " + weather.getOffset());
+                        Timber.d("Current Summary " + weather.getCurrently().getSummary());
+                        Timber.d("Current Time: " + weather.getCurrently().getTime());
+                        Timber.d("Current Precip Type: " + weather.getCurrently().getPrecipType());
+                        Timber.d("Current Temp: " + weather.getCurrently().getTemperature());
+                        Timber.d("Current Precip Intensity: " + weather.getCurrently().getPrecipIntensity());
+                        Timber.d("-----");
 
-                        snowFallTextView.setText(weather.getCurrently().getPrecipType() + " " + String.valueOf(weather.getCurrently().getPrecipIntensity()));
-                        temperatureTextView.setText(String.valueOf(weather.getCurrently().getApparentTemperature()));
+                        String precipTypeCurrent = weather.getCurrently().getPrecipType();
+                        String precipTypeCurrentCapFirst = precipTypeCurrent.substring(0,1).toUpperCase() + precipTypeCurrent.substring(1);
+
+
+//                        int currentTime = weather.getCurrently().getTime();
+//                        double precipIntensity = weather.getCurrently().getPrecipIntensity();
+//                        String precipType = weather.getCurrently().getPrecipType();
+//                        int hour = 0;
+//                        double currentTemp = weather.getCurrently().getTemperature();
+
+
+                        int currentTime = weather.getCurrently().getTime();
+                        double precipIntensity = 0.0d;
+                        String precipType = weather.getCurrently().getPrecipType();
+                        int hour = 0;
+                        double currentTemp = weather.getCurrently().getTemperature();
+
+
+                        Timber.d("------");
+                        Timber.d("Hourly Summary: " + weather.getHourly().getSummary());
+                        List<WeatherInfo> hourlyData = weather.getHourly().getData();
+                        for(WeatherInfo hourData: hourlyData){
+                            Timber.d("----BEGIN FOR------");
+
+                            hour = hour + 1;
+                            precipIntensity = precipIntensity + hourData.getPrecipIntensity();
+                            precipType = hourData.getPrecipType().substring(0,1).toUpperCase() + hourData.getPrecipType().substring(1);
+                            currentTemp = hourData.getTemperature();
+
+                            Timber.d("Hourly Precip Intensity " + precipIntensity);
+                            Timber.d("Hourly Precip Type " + precipType);
+                            Timber.d("HourlyTemp " + currentTemp);
+                            Timber.d("Hourly Time " + hourData.getTime() + " Current time: " + currentTime);
+                            if(hourData.getTime() >= currentTime){
+                                Timber.d("-----END FOR-----");
+                                break;
+                            }
+                            Timber.d("-----END FOR-----");
+                        }
+
+                        snowFallTextView.setText(precipTypeCurrentCapFirst + ": " + String.valueOf(precipIntensity));
+                        temperatureTextView.setText(String.valueOf(currentTemp)+"\\u00B0"+"C");
                         elevationTextView.setText("ELEVATION");
-                        locationTextView.setText(weather.getHourly().getSummary().toString());
-                        locationDetailTextView.setText(addressOutput);
+                        weatherSummaryTextView.setText(weather.getHourly().getSummary().toString());
+                        locationTextView.setText(addressOutput);
 
                     }
                 });
@@ -374,11 +443,43 @@ public class MainActivity extends AppCompatActivity
                 == PackageManager.PERMISSION_GRANTED) {
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
             if (lastLocation != null) {
+                latitude = String.valueOf(lastLocation.getLatitude());
+                longitude = String.valueOf(lastLocation.getLongitude());
                 Log.d(TAG, "Latitude: "+String.valueOf(lastLocation.getLatitude()));
                 Log.d(TAG, "Longitude: "+String.valueOf(lastLocation.getLongitude()));
+                startFetchAddressIntentService();
+                callForecastApi();
+//                SharedPreferences pref = getApplicationContext().getSharedPreferences("lastLocation", MODE_PRIVATE);
+//                SharedPreferences.Editor editor = pref.edit();
+//                editor.putString("lastLat", String.valueOf(lastLocation.getLatitude()));
+//                editor.putString("lastLong", String.valueOf(lastLocation.getLongitude()));
+//                editor.commit();
             }
             else {
-                Log.d(TAG, "LastLocation not null");
+
+                // ---- Crashes, error is googleapiclient not connected --- ////
+                if(googleApiClient.isConnected()){
+                    Log.d(TAG, "GOOGLE API CONNECTED");
+                    locationRequest = LocationRequest.create()
+                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                            .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                            .setFastestInterval(1 * 1000);
+
+                    LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+                }else{
+
+                    Log.d(TAG, "GOOGLE API NOT CONNECTED");
+//                    SharedPreferences pref = getSharedPreferences("lastLocation", MODE_PRIVATE);
+//                    String Lat = pref.getString("lastLat", "29.764822");
+//                    String Long = pref.getString("lastLong", "-95.372206");
+//                    Log.d(TAG, "Pref Lat: " + Lat);
+//                    Log.d(TAG, "Pref Long: " + Long);
+//                    lastLocation.setLatitude(Double.valueOf(Lat));
+//                    lastLocation.setLongitude(Double.valueOf(Long));
+                }
+
+
+                Log.d(TAG, "LastLocation null");
             }
 
         }
@@ -387,8 +488,75 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         googleApiClient.connect();
+        requestLocationStatus();
         super.onStart();
     }
+
+
+    private void requestLocationStatus(){
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(30 * 1000);
+        locationRequest.setFastestInterval(5 * 1000);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        //**************************
+        builder.setAlwaysShow(true); //this is the key ingredient
+        //**************************
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can initialize location
+                        // requests here.
+                        checkLocationPermissions();
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be fixed by showing the user
+                        // a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(
+                                    MainActivity.this, 1000);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way to fix the
+                        // settings so we won't show the dialog.
+                        break;
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if(googleApiClient.isConnected()){
+            Log.d(TAG, "lastLocation latitdue"+location.getLatitude());
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+                lastLocation.setLatitude(location.getLatitude());
+                lastLocation.setLongitude(location.getLongitude());
+                latitude = String.valueOf(location.getLatitude());
+                longitude = String.valueOf(location.getLongitude());
+                startFetchAddressIntentService();
+                callForecastApi();
+            }
+        }
+    }
+
+
 
     @Override
     protected void onStop() {
@@ -412,11 +580,12 @@ public class MainActivity extends AppCompatActivity
         snowFallTextView = (TextView) findViewById(R.id.snowfall_textView);
         temperatureTextView = (TextView) findViewById(R.id.temperature_textView);
         elevationTextView = (TextView) findViewById(R.id.elevation_textView);
-        locationTextView = (TextView) findViewById(R.id.location1_textView);
-        locationDetailTextView = (TextView) findViewById(R.id.location2_textView);
-        locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
+        weatherSummaryTextView = (TextView) findViewById(R.id.weatherSummary_textView);
+        locationTextView = (TextView) findViewById(R.id.location_textView);
+        //locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
         photoImageView = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
+        logoImagesLayout = (LinearLayout) findViewById(R.id.logo_linearLayout);
     }
 
     private void initColorButtons() {
@@ -463,9 +632,9 @@ public class MainActivity extends AppCompatActivity
         snowFallTextView.setTextColor(color);
         temperatureTextView.setTextColor(color);
         elevationTextView.setTextColor(color);
-        locationTextView.setTextColor(color);
+        weatherSummaryTextView.setTextColor(color);
         locationHyphenTextView.setTextColor(color);
-        locationDetailTextView.setTextColor(color);
+        locationTextView.setTextColor(color);
     }
 
 
@@ -485,8 +654,10 @@ public class MainActivity extends AppCompatActivity
         if(lastLocation != null){
             Log.d(TAG, "lastlocation not null");
             startFetchAddressIntentService();
+            callForecastApi();
         }else{
             Log.d(TAG, "lastlocation null");
+            checkLocationPermissions();
         }
     }
 
