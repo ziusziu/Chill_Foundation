@@ -76,8 +76,8 @@ import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+        ,LocationListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity
 //        callForecastApi();
 
         initAnimations();
-        loadAnimations();
+        //loadAnimations();
 
     }
 
@@ -142,10 +142,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initAnimations(){
+        Timber.d("------- INIT ANIMATIONS START -----");
         bounceRightToLeftAnimation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.translate);
+        Timber.d("------- INIT ANIMATIONS END -----");
     }
 
     private void loadAnimations(){
+        Timber.d("------- ANIMATIONS START -----");
         snowFallTextView.startAnimation(bounceRightToLeftAnimation);
         temperatureTextView.startAnimation(bounceRightToLeftAnimation);
         elevationTextView.startAnimation(bounceRightToLeftAnimation);
@@ -153,6 +156,7 @@ public class MainActivity extends AppCompatActivity
 //        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
         locationTextView.startAnimation(bounceRightToLeftAnimation);
         logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
+        Timber.d("------- ANIMATIONS END -----");
     }
 
 
@@ -191,31 +195,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void setFabClickListenter(){
-
-
-
-        shareFAB.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "Send Clicked " + editedImageUri);
-
-                saveBitmap(takeScreenshot(view));
-                Uri imagePathFileUri = getScreenshotFileUri();
-
-                Log.d(TAG, "Share Image uri " + imagePathFileUri);
-                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
-                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
-                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
-                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
-                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
-
-            }
-        });
-    }
-
-
-
     public Bitmap takeScreenshot(View view) {
         View rootView = view.getRootView().findViewById(R.id.photo_container);
         rootView.setDrawingCacheEnabled(true);
@@ -248,6 +227,30 @@ public class MainActivity extends AppCompatActivity
         return Uri.fromFile(imagePath1);
     }
 
+// ------------------ FAB STUFF ---------------------//
+
+    private void setFabClickListenter(){
+        shareFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "Send Clicked " + editedImageUri);
+
+                saveBitmap(takeScreenshot(view));
+                Uri imagePathFileUri = getScreenshotFileUri();
+
+                Log.d(TAG, "Share Image uri " + imagePathFileUri);
+                //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postSnapChat(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+                //UtilityFunction.postPinterest(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
+
+            }
+        });
+    }
+
+// ---------------- Weather API ------------- /////
+
     protected void callForecastApi(){
 
         ForecastService.ForecastRx forecast = ForecastService.createRx();
@@ -261,6 +264,11 @@ public class MainActivity extends AppCompatActivity
             longitude = "Nothing";
         }
         String latLong = latitude+","+longitude;
+
+        Timber.d("------ API LOCATION START------");
+        Timber.d("FORECASTAPI: Latitude " + latitude);
+        Timber.d("FORECASTAPI: Longitude " + longitude);
+        Timber.d("------ API LOCATION END------");
 
         String forecastApiKey = getResources().getString(R.string.forecast_api);
 
@@ -281,62 +289,30 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onNext(Weather weather) {
-                        Timber.d("------------");
-                        Timber.d("TimeZone: " + weather.getTimezone());
-                        Timber.d("Offset: " + weather.getOffset());
-                        Timber.d("Current Summary " + weather.getCurrently().getSummary());
-                        Timber.d("Current Time: " + weather.getCurrently().getTime());
-                        Timber.d("Current Precip Type: " + weather.getCurrently().getPrecipType());
-                        Timber.d("Current Temp: " + weather.getCurrently().getTemperature());
-                        Timber.d("Current Precip Intensity: " + weather.getCurrently().getPrecipIntensity());
-                        Timber.d("-----");
-
-                        String precipTypeCurrent = weather.getCurrently().getPrecipType();
-                        String precipTypeCurrentCapFirst = precipTypeCurrent.substring(0,1).toUpperCase() + precipTypeCurrent.substring(1);
+                        Timber.d("----- UPDATE TEXTVIEW START -------");
 
 
-//                        int currentTime = weather.getCurrently().getTime();
-//                        double precipIntensity = weather.getCurrently().getPrecipIntensity();
-//                        String precipType = weather.getCurrently().getPrecipType();
-//                        int hour = 0;
-//                        double currentTemp = weather.getCurrently().getTemperature();
-
-
-                        int currentTime = weather.getCurrently().getTime();
-                        double precipIntensity = 0.0d;
-                        String precipType = weather.getCurrently().getPrecipType();
-                        int hour = 0;
                         double currentTemp = weather.getCurrently().getTemperature();
+                        String precipTypeCurrent = weather.getCurrently().getPrecipType();
+                        String weatherSummary = weather.getHourly().getSummary();
 
-
-                        Timber.d("------");
-                        Timber.d("Hourly Summary: " + weather.getHourly().getSummary());
-                        List<WeatherInfo> hourlyData = weather.getHourly().getData();
-                        for(WeatherInfo hourData: hourlyData){
-                            Timber.d("----BEGIN FOR------");
-
-                            hour = hour + 1;
-                            precipIntensity = precipIntensity + hourData.getPrecipIntensity();
-                            precipType = hourData.getPrecipType().substring(0,1).toUpperCase() + hourData.getPrecipType().substring(1);
-                            currentTemp = hourData.getTemperature();
-
-                            Timber.d("Hourly Precip Intensity " + precipIntensity);
-                            Timber.d("Hourly Precip Type " + precipType);
-                            Timber.d("HourlyTemp " + currentTemp);
-                            Timber.d("Hourly Time " + hourData.getTime() + " Current time: " + currentTime);
-                            if(hourData.getTime() >= currentTime){
-                                Timber.d("-----END FOR-----");
-                                break;
-                            }
-                            Timber.d("-----END FOR-----");
+                        if(precipTypeCurrent == null){
+                            Timber.d(" --- NO PRECIPITATION----");
+                            snowFallTextView.setText("");
+                            snowFallTextView.setVisibility(View.GONE);
+                        }else{
+                            String precipTypeCurrentCapFirst = precipTypeCurrent.substring(0,1).toUpperCase() + precipTypeCurrent.substring(1);
+                            double precipIntensity = weather.getCurrently().getPrecipIntensity();
+                            snowFallTextView.setText(precipTypeCurrentCapFirst + ": " + String.valueOf(precipIntensity));
                         }
 
-                        snowFallTextView.setText(precipTypeCurrentCapFirst + ": " + String.valueOf(precipIntensity));
-                        temperatureTextView.setText(String.valueOf(currentTemp)+"\\u00B0"+"C");
+                        temperatureTextView.setText(String.valueOf(currentTemp)+"\u00B0"+"C");
                         elevationTextView.setText("ELEVATION");
-                        weatherSummaryTextView.setText(weather.getHourly().getSummary().toString());
                         locationTextView.setText(addressOutput);
+                        weatherSummaryTextView.setText(weatherSummary);
 
+                        loadAnimations();
+                        Timber.d("---- UPDATE TEXTVIEW END --------");
                     }
                 });
     }
@@ -378,7 +354,6 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
-
 
     private Uri moveToContentProvider(Uri uri){
         try{
@@ -487,6 +462,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onStart() {
+        Timber.d("----- OnStart -----");
         googleApiClient.connect();
         requestLocationStatus();
         super.onStart();
@@ -560,6 +536,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onStop() {
+        Timber.d(" ------- onStop -----");
         googleApiClient.disconnect();
         super.onStop();
     }
@@ -572,6 +549,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void initializeViews() {
+        Timber.d("------- Init View START------");
         toolbar = (Toolbar)findViewById(R.id.toolbar);
         color1Button = (Button) findViewById(R.id.color1_button);
         color2Button = (Button) findViewById(R.id.color2_button);
@@ -586,13 +564,16 @@ public class MainActivity extends AppCompatActivity
         photoImageView = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
         logoImagesLayout = (LinearLayout) findViewById(R.id.logo_linearLayout);
+        Timber.d("------- Init View END------");
     }
 
     private void initColorButtons() {
+        Timber.d("------- Init Color Button Listeners START------");
         setButtonOnClickListener(color1Button);
         setButtonOnClickListener(color2Button);
         setButtonOnClickListener(color3Button);
         setButtonOnClickListener(color4Button);
+        Timber.d("------- Init Color Button Listeners END------");
     }
 
     private void setButtonOnClickListener(final Button button) {
@@ -705,6 +686,9 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
+
+// --------- Menu icons -------////
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
