@@ -1,6 +1,7 @@
 package foundation.chill.provider;
 
 import foundation.chill.model.forecast.Weather;
+import foundation.chill.utilities.UtilityFunction;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -28,6 +29,7 @@ public class ForecastService {
                 .baseUrl(API_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(UtilityFunction.getOkHttpLoggingClient())
                 .build()
                 .create(ForecastService.ForecastRx.class);
     }

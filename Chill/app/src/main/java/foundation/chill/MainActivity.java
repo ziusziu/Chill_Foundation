@@ -139,18 +139,20 @@ public class MainActivity extends AppCompatActivity
         logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
     }
 
+
     private void setImageViewClickListener(){
 
         Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
         editedImageUri = getImageUri(getApplicationContext(), bitmap);
 
-        photoImageView.setOnClickListener(new View.OnClickListener() {
+        photoImageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onLongClick(View view) {
                 Log.d(TAG, "Photot Clicked" + editedImageUri);
                 Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
                 //verifyStoragePermissions(MainActivity.this);
+                return false;
             }
         });
     }
