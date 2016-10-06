@@ -60,10 +60,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import foundation.chill.model.forecast.Weather;
-import foundation.chill.model.forecast.WeatherInfo;
 import foundation.chill.provider.ForecastService;
 import foundation.chill.utilities.CheckInternetConnection;
 import foundation.chill.utilities.Constants;
@@ -346,9 +344,15 @@ public class MainActivity extends AppCompatActivity
                 photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
             }
 
-            if(requestCode == 1000 && resultCode == RESULT_OK){
+            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
                 Timber.d("resolution code 1000");
                 checkLocationPermissions();
+            }
+
+            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
+                Timber.d("Result Cancelled, GPS Not connected");
+                logoImagesLayout.setVisibility(View.VISIBLE);
+                loadAnimations();
             }
         }
         Timber.d("-----onActivityResult END -------");
@@ -506,7 +510,7 @@ public class MainActivity extends AppCompatActivity
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
                             status.startResolutionForResult(
-                                    MainActivity.this, 1000);
+                                    MainActivity.this, Constants.RESULT_GPS_NOT_CONNECT);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }

@@ -29,5 +29,6 @@ public final class Constants {
     public static final int GET_EDIT_PICTURE = 2;
 
     public static final int RESULT_LOAD_IMAGE = 3;
+    public static final int RESULT_GPS_NOT_CONNECT = 1000;
 
 }
