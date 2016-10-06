@@ -32,7 +32,7 @@ public class SplashActivity extends AppCompatActivity {
                 }
             };
             handler = new Handler();
-            handler.postDelayed(run, secondsDelayed * 5000);
+            handler.postDelayed(run, secondsDelayed * 1000);
             
             splashLayout.setOnClickListener(new View.OnClickListener() {
                 @Override

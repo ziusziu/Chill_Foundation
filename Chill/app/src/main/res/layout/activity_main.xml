@@ -59,6 +59,7 @@
             android:orientation="horizontal"
             android:layout_marginBottom="12dp"
             android:layout_alignParentBottom="true"
+            android:visibility="invisible"
             android:layout_marginLeft="20dp">
 
             <ImageView
@@ -86,6 +87,7 @@
             android:text="WEATHER SUMMARY"
             android:textColor="@color/colorNeon"
             android:textSize="25sp"
+            android:visibility="invisible"
             android:includeFontPadding="false"/>
 
 
@@ -98,6 +100,7 @@
             android:layout_above="@id/weatherSummary_textView"
             android:textColor="@color/colorNeon"
             android:textSize="25sp"
+            android:visibility="invisible"
             android:includeFontPadding="false"/>
 
         <TextView
@@ -110,6 +113,7 @@
             android:text="SNOWFALL"
             android:textColor="@color/colorNeon"
             android:includeFontPadding="false"
+            android:visibility="invisible"
             android:layout_above="@id/location_textView"/>
 
         <TextView
@@ -122,6 +126,7 @@
             android:text="ELEVATION"
             android:textColor="@color/colorNeon"
             android:layout_above="@id/snowfall_textView"
+            android:visibility="invisible"
             android:includeFontPadding="false"/>
 
         <TextView
@@ -134,6 +139,7 @@
             android:text="TEMPERATURE"
             android:textColor="@color/colorNeon"
             android:layout_above="@id/elevation_textView"
+            android:visibility="invisible"
             android:includeFontPadding="false"/>
 
 
