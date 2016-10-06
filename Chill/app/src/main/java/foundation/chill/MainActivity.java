@@ -125,14 +125,8 @@ public class MainActivity extends AppCompatActivity
         setImageViewClickListener();
         setFabClickListenter();
 
-        checkLocationPermissions();
         getReceiverAddress();
-
-//        callForecastApi();
-
         initAnimations();
-        //loadAnimations();
-
     }
 
     private void initActionBar(){
@@ -320,7 +314,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        Timber.d("-----onActivityResult START ------- RESULT CODE: " + resultCode);
+        Timber.d("-----onActivityResult START ------- REQUEST CODE: " + requestCode);
         if(resultCode == RESULT_OK){
             switch(requestCode){
                 case Constants.TAKE_PICTURE:
@@ -351,8 +346,12 @@ public class MainActivity extends AppCompatActivity
                 photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
             }
 
+            if(requestCode == 1000 && resultCode == RESULT_OK){
+                Timber.d("resolution code 1000");
+                checkLocationPermissions();
+            }
         }
-
+        Timber.d("-----onActivityResult END -------");
     }
 
     private Uri moveToContentProvider(Uri uri){
@@ -389,9 +388,11 @@ public class MainActivity extends AppCompatActivity
                             Manifest.permission.ACCESS_COARSE_LOCATION},
                     Constants.PERMISSION_ACCESS_COARSE_LOCATION);
         } else {
+            Timber.d("------- checkLocationPermissions Permission Granted START-------");
             // Permissions Granted
             Log.d(TAG, "Permissions Granted");
             getLatLongCoordinates();
+            Timber.d("------- checkLocationPermissions Permission Granted END-------");
         }
     }
 
@@ -418,6 +419,7 @@ public class MainActivity extends AppCompatActivity
                 == PackageManager.PERMISSION_GRANTED) {
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
             if (lastLocation != null) {
+                Timber.d("------- getLatLongCoordinates    lastlocation != null   START------");
                 latitude = String.valueOf(lastLocation.getLatitude());
                 longitude = String.valueOf(lastLocation.getLongitude());
                 Log.d(TAG, "Latitude: "+String.valueOf(lastLocation.getLatitude()));
@@ -429,9 +431,10 @@ public class MainActivity extends AppCompatActivity
 //                editor.putString("lastLat", String.valueOf(lastLocation.getLatitude()));
 //                editor.putString("lastLong", String.valueOf(lastLocation.getLongitude()));
 //                editor.commit();
+                Timber.d("------- getLatLongCoordinates    lastlocation != null   END------");
             }
             else {
-
+                Timber.d("------- getLatLongCoordinates    lastlocation == null   START------");
                 // ---- Crashes, error is googleapiclient not connected --- ////
                 if(googleApiClient.isConnected()){
                     Log.d(TAG, "GOOGLE API CONNECTED");
@@ -452,9 +455,7 @@ public class MainActivity extends AppCompatActivity
 //                    lastLocation.setLatitude(Double.valueOf(Lat));
 //                    lastLocation.setLongitude(Double.valueOf(Long));
                 }
-
-
-                Log.d(TAG, "LastLocation null");
+                Timber.d("------- getLatLongCoordinates    lastlocation == null   END------");
             }
 
         }
@@ -470,6 +471,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void requestLocationStatus(){
+        Timber.d("------- RequestLocationStatus START ----------");
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(30 * 1000);
@@ -492,9 +494,12 @@ public class MainActivity extends AppCompatActivity
                     case LocationSettingsStatusCodes.SUCCESS:
                         // All location settings are satisfied. The client can initialize location
                         // requests here.
+                        Timber.d("------ Location Status Success START--------");
                         checkLocationPermissions();
+                        Timber.d("------ Location Status Success END--------");
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        Timber.d("------ Location Resolution Required START--------");
                         // Location settings are not satisfied. But could be fixed by showing the user
                         // a dialog.
                         try {
@@ -505,14 +510,19 @@ public class MainActivity extends AppCompatActivity
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
+                        Timber.d("------ Location Resolution Required END--------");
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        Timber.d("------ Location Settings Change Unavailable START--------");
                         // Location settings are not satisfied. However, we have no way to fix the
                         // settings so we won't show the dialog.
+
+                        Timber.d("------ Location Settings Change Unavailable END--------");
                         break;
                 }
             }
         });
+        Timber.d("------- RequestLocationStatus END ----------");
     }
 
     @Override
@@ -521,6 +531,7 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "lastLocation latitdue"+location.getLatitude());
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
+                Timber.d("-------- Location Changed START -------");
                 lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
                 lastLocation.setLatitude(location.getLatitude());
                 lastLocation.setLongitude(location.getLongitude());
@@ -528,6 +539,7 @@ public class MainActivity extends AppCompatActivity
                 longitude = String.valueOf(location.getLongitude());
                 startFetchAddressIntentService();
                 callForecastApi();
+                Timber.d("-------- Location Changed END -------");
             }
         }
     }
@@ -625,20 +637,25 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if(CheckInternetConnection.isNetworkAvailable(MainActivity.this)){
-            Log.d(TAG, "Network Available");
-            getLatLongCoordinates();
-        }else{
-            Log.d(TAG, "Internet Not Connected");
-        }
 
-        if(lastLocation != null){
-            Log.d(TAG, "lastlocation not null");
-            startFetchAddressIntentService();
-            callForecastApi();
-        }else{
-            Log.d(TAG, "lastlocation null");
-            checkLocationPermissions();
+        if(CheckInternetConnection.isNetworkAvailable(MainActivity.this)){
+            Timber.d("-------- OnConnected   network Available  START -------");
+            Log.d(TAG, "Network Available");
+            //getLatLongCoordinates();
+            //checkLocationPermissions();
+            Timber.d("-------- OnConnected   network Available  END -------");
+        }else {
+            Log.d(TAG, "Internet Not Connected");
+//            if (lastLocation != null) {
+//                Timber.d("-------- OnConnected   lastlocation != null  START -------");
+//                Log.d(TAG, "lastlocation not null");
+//                startFetchAddressIntentService();
+//                callForecastApi();
+//                Timber.d("-------- OnConnected   lastlocation != null  END -------");
+//            } else {
+//                Log.d(TAG, "lastlocation null");
+//                checkLocationPermissions();
+//            }
         }
     }
 
