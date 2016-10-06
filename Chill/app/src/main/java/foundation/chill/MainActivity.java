@@ -169,11 +169,17 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    public Uri getImageUri(Context inContext, Bitmap inImage) {
+    public Uri getImageUri(Context inContext, Bitmap photoImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
-        return Uri.parse(path);
+        photoImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), photoImage, "Photo", null);
+        Uri imageUri = Uri.parse(path);
+        String id = imageUri.getLastPathSegment();
+        Timber.d("URI: ImageUri Long Click: " + imageUri);
+        Timber.d("URI: Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Timber.d("URI: Printer ID" + id);
+        //return Uri.parse(path);
+        return imageUri;
     }
 
     public void verifyStoragePermissions(Activity activity){
@@ -325,8 +331,10 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Picture Take " + editedImageUri);
 
                     editedImageUri = moveToContentProvider(editedImageUri);
-
-                    Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
+                    String id = editedImageUri.getLastPathSegment();
+                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
+                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    Timber.d("URI: Printer ID " + id);
                     photoImageView.setImageURI(editedImageUri);
                     photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
@@ -742,8 +750,11 @@ public class MainActivity extends AppCompatActivity
 
                     Uri imagePathPrinterFileUri = getScreenshotFileUri();
                     Uri printerEditedImageUri = moveToContentProvider(imagePathPrinterFileUri);
+                    String id = printerEditedImageUri.getLastPathSegment();
 
-                    Log.d(TAG, "Printer Clicked " + printerEditedImageUri);
+                    Log.d(TAG, "URI: Printer Clicked " + printerEditedImageUri);
+                    Timber.d("URI: Printer " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    Timber.d("URI: Printer ID" + id);
 
                     InputStream is = getContentResolver().openInputStream(printerEditedImageUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(is);
