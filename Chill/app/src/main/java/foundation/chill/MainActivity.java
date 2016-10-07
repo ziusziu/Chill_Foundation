@@ -3,6 +3,7 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -125,6 +126,7 @@ public class MainActivity extends AppCompatActivity
 
         getReceiverAddress();
         initAnimations();
+
     }
 
     private void initActionBar(){
@@ -309,10 +311,11 @@ public class MainActivity extends AppCompatActivity
                         locationTextView.setText(addressOutput);
                         weatherSummaryTextView.setText(weatherSummary);
 
-                        loadAnimations();
+                        //loadAnimations();
                         Timber.d("---- UPDATE TEXTVIEW END --------");
                     }
                 });
+        loadAnimations();
     }
 
 
@@ -331,10 +334,24 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Picture Take " + editedImageUri);
 
                     editedImageUri = moveToContentProvider(editedImageUri);
-                    String id = editedImageUri.getLastPathSegment();
-                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
-                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    Timber.d("URI: Printer ID " + id);
+//                    String id = editedImageUri.getLastPathSegment();
+//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
+//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                    Timber.d("URI: Printer ID " + id);
+//
+//                    ContentValues test_values = new ContentValues();
+//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
+//                    Timber.d("URI: Printer new Path " + newPath);
+//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
+//
+//                    String sIMAGE_ID = editedImageUri.toString();
+//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
+//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
+//
+//
+//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
+//
+//                    Timber.d("URI: Printer update " + res);
                     photoImageView.setImageURI(editedImageUri);
                     photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
@@ -360,7 +377,7 @@ public class MainActivity extends AppCompatActivity
             if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
                 Timber.d("Result Cancelled, GPS Not connected");
                 logoImagesLayout.setVisibility(View.VISIBLE);
-                loadAnimations();
+               // loadAnimations();
             }
         }
         Timber.d("-----onActivityResult END -------");
@@ -368,7 +385,10 @@ public class MainActivity extends AppCompatActivity
 
     private Uri moveToContentProvider(Uri uri){
         try{
-            return Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            Timber.d("URI: MoveToContentProvider Old URI" + uri);
+            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            Timber.d("URI: MoveToContentProvider NEW URI" + uri);
+            return newUri;
         }catch(FileNotFoundException e){
             e.printStackTrace();
         }
@@ -638,7 +658,7 @@ public class MainActivity extends AppCompatActivity
         temperatureTextView.setTextColor(color);
         elevationTextView.setTextColor(color);
         weatherSummaryTextView.setTextColor(color);
-        locationHyphenTextView.setTextColor(color);
+//        locationHyphenTextView.setTextColor(color);
         locationTextView.setTextColor(color);
     }
 
