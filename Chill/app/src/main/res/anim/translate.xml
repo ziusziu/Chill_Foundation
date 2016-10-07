@@ -10,24 +10,24 @@
         android:fillAfter="true"
         android:fromXDelta="110%p"
         android:toXDelta="-5%p"
-        android:startOffset="300"/>
+        android:startOffset="500"/>
     <translate
         android:duration="500"
         android:fillAfter="true"
         android:fromXDelta="0%p"
-        android:startOffset="1100"
+        android:startOffset="1300"
         android:toXDelta="30%p" />
     <translate
         android:duration="400"
         android:fillAfter="true"
         android:fromXDelta="0%p"
-        android:startOffset="1600"
+        android:startOffset="1800"
         android:toXDelta="-28%p" />
     <translate
         android:duration="100"
         android:fillAfter="true"
         android:fromXDelta="0%p"
-        android:startOffset="2000"
+        android:startOffset="2200"
         android:toXDelta="3%p" />
 
 </set>

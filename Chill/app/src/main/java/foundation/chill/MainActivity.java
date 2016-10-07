@@ -3,6 +3,7 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -60,10 +61,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import foundation.chill.model.forecast.Weather;
-import foundation.chill.model.forecast.WeatherInfo;
 import foundation.chill.provider.ForecastService;
 import foundation.chill.utilities.CheckInternetConnection;
 import foundation.chill.utilities.Constants;
@@ -127,6 +126,7 @@ public class MainActivity extends AppCompatActivity
 
         getReceiverAddress();
         initAnimations();
+
     }
 
     private void initActionBar(){
@@ -171,11 +171,17 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    public Uri getImageUri(Context inContext, Bitmap inImage) {
+    public Uri getImageUri(Context inContext, Bitmap photoImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
-        return Uri.parse(path);
+        photoImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), photoImage, "Photo", null);
+        Uri imageUri = Uri.parse(path);
+        String id = imageUri.getLastPathSegment();
+        Timber.d("URI: ImageUri Long Click: " + imageUri);
+        Timber.d("URI: Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Timber.d("URI: Printer ID" + id);
+        //return Uri.parse(path);
+        return imageUri;
     }
 
     public void verifyStoragePermissions(Activity activity){
@@ -305,10 +311,11 @@ public class MainActivity extends AppCompatActivity
                         locationTextView.setText(addressOutput);
                         weatherSummaryTextView.setText(weatherSummary);
 
-                        loadAnimations();
+                        //loadAnimations();
                         Timber.d("---- UPDATE TEXTVIEW END --------");
                     }
                 });
+        loadAnimations();
     }
 
 
@@ -327,8 +334,24 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Picture Take " + editedImageUri);
 
                     editedImageUri = moveToContentProvider(editedImageUri);
-
-                    Log.d(TAG, "Picture Take moved to content provider " + editedImageUri);
+//                    String id = editedImageUri.getLastPathSegment();
+//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
+//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                    Timber.d("URI: Printer ID " + id);
+//
+//                    ContentValues test_values = new ContentValues();
+//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
+//                    Timber.d("URI: Printer new Path " + newPath);
+//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
+//
+//                    String sIMAGE_ID = editedImageUri.toString();
+//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
+//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
+//
+//
+//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
+//
+//                    Timber.d("URI: Printer update " + res);
                     photoImageView.setImageURI(editedImageUri);
                     photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
                     break;
@@ -346,9 +369,15 @@ public class MainActivity extends AppCompatActivity
                 photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
             }
 
-            if(requestCode == 1000 && resultCode == RESULT_OK){
+            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
                 Timber.d("resolution code 1000");
                 checkLocationPermissions();
+            }
+
+            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
+                Timber.d("Result Cancelled, GPS Not connected");
+                logoImagesLayout.setVisibility(View.VISIBLE);
+               // loadAnimations();
             }
         }
         Timber.d("-----onActivityResult END -------");
@@ -356,7 +385,10 @@ public class MainActivity extends AppCompatActivity
 
     private Uri moveToContentProvider(Uri uri){
         try{
-            return Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            Timber.d("URI: MoveToContentProvider Old URI" + uri);
+            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            Timber.d("URI: MoveToContentProvider NEW URI" + uri);
+            return newUri;
         }catch(FileNotFoundException e){
             e.printStackTrace();
         }
@@ -506,7 +538,7 @@ public class MainActivity extends AppCompatActivity
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
                             status.startResolutionForResult(
-                                    MainActivity.this, 1000);
+                                    MainActivity.this, Constants.RESULT_GPS_NOT_CONNECT);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
@@ -626,7 +658,7 @@ public class MainActivity extends AppCompatActivity
         temperatureTextView.setTextColor(color);
         elevationTextView.setTextColor(color);
         weatherSummaryTextView.setTextColor(color);
-        locationHyphenTextView.setTextColor(color);
+//        locationHyphenTextView.setTextColor(color);
         locationTextView.setTextColor(color);
     }
 
@@ -738,8 +770,11 @@ public class MainActivity extends AppCompatActivity
 
                     Uri imagePathPrinterFileUri = getScreenshotFileUri();
                     Uri printerEditedImageUri = moveToContentProvider(imagePathPrinterFileUri);
+                    String id = printerEditedImageUri.getLastPathSegment();
 
-                    Log.d(TAG, "Printer Clicked " + printerEditedImageUri);
+                    Log.d(TAG, "URI: Printer Clicked " + printerEditedImageUri);
+                    Timber.d("URI: Printer " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    Timber.d("URI: Printer ID" + id);
 
                     InputStream is = getContentResolver().openInputStream(printerEditedImageUri);
                     Bitmap bitmap = BitmapFactory.decodeStream(is);
