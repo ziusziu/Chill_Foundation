@@ -107,6 +107,9 @@ public class MainActivity extends AppCompatActivity
 
     PrintHelper photoPrinter;
 
+    String screenshotId = "";
+    String pictureId = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -156,12 +159,13 @@ public class MainActivity extends AppCompatActivity
 
     private void setImageViewClickListener(){
 
-        Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
-        editedImageUri = getImageUri(getApplicationContext(), bitmap);
+
 
         photoImageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
+                Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
+                editedImageUri = getImageUri(getApplicationContext(), bitmap);
                 Log.d(TAG, "Photot Clicked" + editedImageUri);
                 Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
@@ -172,14 +176,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     public Uri getImageUri(Context inContext, Bitmap photoImage) {
+
+        if(!screenshotId.equals("")){
+            Log.d(TAG, "URI: screenshotId " + screenshotId);
+            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?", new String[]{screenshotId});
+            Log.d(TAG, "URI: screenshotDelete " + rowsDeleted);
+        }
+
+
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         photoImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), photoImage, "Photo", null);
         Uri imageUri = Uri.parse(path);
-        String id = imageUri.getLastPathSegment();
+        screenshotId = imageUri.getLastPathSegment();
         Timber.d("URI: ImageUri Long Click: " + imageUri);
         Timber.d("URI: Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        Timber.d("URI: Printer ID" + id);
+        Timber.d("URI: screenShotId " + screenshotId);
         //return Uri.parse(path);
         return imageUri;
     }
@@ -333,7 +345,10 @@ public class MainActivity extends AppCompatActivity
                     editedImageUri = data.getData();
                     Log.d(TAG, "Picture Take " + editedImageUri);
 
+
                     editedImageUri = moveToContentProvider(editedImageUri);
+
+
 //                    String id = editedImageUri.getLastPathSegment();
 //                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
 //                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -384,10 +399,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     private Uri moveToContentProvider(Uri uri){
+        if(!pictureId.equals("")){
+            Log.d(TAG, "URI: pictureId " + pictureId);
+            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?",new String[]{pictureId});
+            Log.d(TAG, "URI: pictureId rows deleted" + rowsDeleted);
+        }
         try{
             Timber.d("URI: MoveToContentProvider Old URI" + uri);
             Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
             Timber.d("URI: MoveToContentProvider NEW URI" + uri);
+            pictureId = newUri.getLastPathSegment();
             return newUri;
         }catch(FileNotFoundException e){
             e.printStackTrace();
@@ -769,6 +790,8 @@ public class MainActivity extends AppCompatActivity
                     saveBitmap(takeScreenshot(findViewById(R.id.photo_container)));
 
                     Uri imagePathPrinterFileUri = getScreenshotFileUri();
+
+
                     Uri printerEditedImageUri = moveToContentProvider(imagePathPrinterFileUri);
                     String id = printerEditedImageUri.getLastPathSegment();
 
