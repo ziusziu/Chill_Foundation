@@ -100,7 +100,7 @@ public class UtilityFunction {
     public static void postInstagram(Activity activity, String bodyText, Uri editedImageUri){
 
         Intent instagramIntent = new Intent(Intent.ACTION_SEND);
-        //instagramIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
+        instagramIntent.putExtra(Intent.EXTRA_TEXT, bodyText);
         instagramIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + editedImageUri));
         instagramIntent.setType("image/*");
         instagramIntent.setPackage("com.instagram.android");

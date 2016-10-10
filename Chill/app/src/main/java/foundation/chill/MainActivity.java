@@ -3,7 +3,6 @@ package foundation.chill;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -14,6 +13,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
@@ -62,8 +65,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import de.greenrobot.event.EventBus;
+import foundation.chill.model.DistanceUnit;
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
+import foundation.chill.utilities.AltimatePrefs;
 import foundation.chill.utilities.CheckInternetConnection;
 import foundation.chill.utilities.Constants;
 import foundation.chill.provider.FetchAddressIntentService;
@@ -76,7 +82,7 @@ import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
-        ,LocationListener {
+        ,LocationListener, SensorEventListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -110,6 +116,16 @@ public class MainActivity extends AppCompatActivity
     String screenshotId = "";
     String pictureId = "";
 
+    private DistanceUnit distanceUnit;
+    private double myBasePressure;
+    private double basePressureCoefficient = 0.000986923;
+    double altitude_ft_zero;
+
+    /** Sensor objects */
+    private SensorManager sensorManager;
+    private Sensor pressure;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,6 +145,21 @@ public class MainActivity extends AppCompatActivity
 
         getReceiverAddress();
         initAnimations();
+
+        /**
+         *  Get an instance of the sensor service, and use that to get an instance of
+         *  a particular sensor.
+         */
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+
+        distanceUnit = AltimatePrefs.getUnitPreference(MainActivity.this);
+
+        float basePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+        if(basePressure != 0f) {
+            myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+            basePressureCoefficient = 1.0 / myBasePressure;
+        }
 
     }
 
@@ -598,6 +629,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(MainActivity.this, pressure, SensorManager.SENSOR_DELAY_NORMAL);
+    }
 
     @Override
     protected void onStop() {
@@ -606,7 +642,11 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(MainActivity.this);
+    }
 
 
 
@@ -818,5 +858,45 @@ public class MainActivity extends AppCompatActivity
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        final double current_millibars_of_pressure = event.values[0];
+        final double adjust_pressure = current_millibars_of_pressure * basePressureCoefficient;
+
+        /**implement simplified equation for pressure/altitude */
+        final double altitude_ft = (1 - (Math.pow((adjust_pressure), 0.190284))) * 145366.45;
+
+
+        double altitude_ft_calibrated = altitude_ft - altitude_ft_zero;
+        long altitude_ft_round = Math.round(altitude_ft_calibrated);
+        String altitude_string_ft = Long.toString(altitude_ft_round);
+
+        Log.d(TAG, altitude_string_ft);
+        Log.d(TAG, Double.toString(current_millibars_of_pressure));
+
+        switch (distanceUnit) {
+            case FEET:
+                elevationTextView.setText(altitude_string_ft + " " + distanceUnit.getShortFormValue());
+                break;
+            case METERS:
+                //1 meter = 3.28084 ft
+                double altitude_m = 0.3047999902464 * altitude_ft_calibrated;
+                long altitude_m_round = Math.round(altitude_m);
+                String altitude_string_m = Long.toString(altitude_m_round);
+                elevationTextView.setText(altitude_string_m + " " + distanceUnit.getShortFormValue());
+                break;
+        }
+
+        Log.d(TAG, "expected altitude value " + altitude_string_ft + " millibars of pressure " + current_millibars_of_pressure);
+
+
+
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
