@@ -133,8 +133,8 @@ public class MainActivity extends AppCompatActivity
         setGoogleApiClient();
         googleApiClient.connect();
 
-
-        photoPrinter = new PrintHelper(MainActivity.this);
+        initSensorManager();
+        initPrinterHepler();
 
         initializeViews();
         initActionBar();
@@ -150,6 +150,11 @@ public class MainActivity extends AppCompatActivity
          *  Get an instance of the sensor service, and use that to get an instance of
          *  a particular sensor.
          */
+
+
+    }
+
+    private void initSensorManager(){
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 
@@ -160,7 +165,10 @@ public class MainActivity extends AppCompatActivity
             myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
             basePressureCoefficient = 1.0 / myBasePressure;
         }
+    }
 
+    private void initPrinterHepler(){
+        photoPrinter = new PrintHelper(MainActivity.this);
     }
 
     private void initActionBar(){
