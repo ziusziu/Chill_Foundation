@@ -43,7 +43,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -57,15 +56,12 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import de.greenrobot.event.EventBus;
 import foundation.chill.model.DistanceUnit;
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -145,60 +141,15 @@ public class MainActivity extends AppCompatActivity
 
         getReceiverAddress();
         initAnimations();
-
-        /**
-         *  Get an instance of the sensor service, and use that to get an instance of
-         *  a particular sensor.
-         */
-
-
     }
 
-    private void initSensorManager(){
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 
-        distanceUnit = AltimatePrefs.getUnitPreference(MainActivity.this);
 
-        float basePressure = AltimatePrefs.getBasePressure(MainActivity.this);
-        if(basePressure != 0f) {
-            myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
-            basePressureCoefficient = 1.0 / myBasePressure;
-        }
-    }
-
-    private void initPrinterHepler(){
-        photoPrinter = new PrintHelper(MainActivity.this);
-    }
-
-    private void initActionBar(){
-        setSupportActionBar(toolbar);
-        actionBar = getSupportActionBar();
-        actionBar.setTitle("Chill Foundation");
-    }
-
-    private void initAnimations(){
-        Timber.d("------- INIT ANIMATIONS START -----");
-        bounceRightToLeftAnimation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.translate);
-        Timber.d("------- INIT ANIMATIONS END -----");
-    }
-
-    private void loadAnimations(){
-        Timber.d("------- ANIMATIONS START -----");
-        snowFallTextView.startAnimation(bounceRightToLeftAnimation);
-        temperatureTextView.startAnimation(bounceRightToLeftAnimation);
-        elevationTextView.startAnimation(bounceRightToLeftAnimation);
-        weatherSummaryTextView.startAnimation(bounceRightToLeftAnimation);
-//        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
-        locationTextView.startAnimation(bounceRightToLeftAnimation);
-        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
-        Timber.d("------- ANIMATIONS END -----");
-    }
-
+    //================================================================================
+    // Image Methods
+    //================================================================================
 
     private void setImageViewClickListener(){
-
-
 
         photoImageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -245,7 +196,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     public Bitmap takeScreenshot(View view) {
         View rootView = view.getRootView().findViewById(R.id.photo_container);
         rootView.setDrawingCacheEnabled(true);
@@ -278,8 +228,6 @@ public class MainActivity extends AppCompatActivity
         return Uri.fromFile(imagePath1);
     }
 
-// ------------------ FAB STUFF ---------------------//
-
     private void setFabClickListenter(){
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -300,7 +248,97 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-// ---------------- Weather API ------------- /////
+    private Uri moveToContentProvider(Uri uri){
+        if(!pictureId.equals("")){
+            Log.d(TAG, "URI: pictureId " + pictureId);
+            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?",new String[]{pictureId});
+            Log.d(TAG, "URI: pictureId rows deleted" + rowsDeleted);
+        }
+        try{
+            Timber.d("URI: MoveToContentProvider Old URI" + uri);
+            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            Timber.d("URI: MoveToContentProvider NEW URI" + uri);
+            pictureId = newUri.getLastPathSegment();
+            return newUri;
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return uri;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Timber.d("-----onActivityResult START ------- RESULT CODE: " + resultCode);
+        Timber.d("-----onActivityResult START ------- REQUEST CODE: " + requestCode);
+        if(resultCode == RESULT_OK){
+            switch(requestCode){
+                case Constants.TAKE_PICTURE:
+                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
+                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
+                    break;
+                case Constants.GET_EDIT_PICTURE:
+                    editedImageUri = data.getData();
+                    Log.d(TAG, "Picture Take " + editedImageUri);
+
+
+                    editedImageUri = moveToContentProvider(editedImageUri);
+
+
+//                    String id = editedImageUri.getLastPathSegment();
+//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
+//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                    Timber.d("URI: Printer ID " + id);
+//
+//                    ContentValues test_values = new ContentValues();
+//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
+//                    Timber.d("URI: Printer new Path " + newPath);
+//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
+//
+//                    String sIMAGE_ID = editedImageUri.toString();
+//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
+//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
+//
+//
+//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
+//
+//                    Timber.d("URI: Printer update " + res);
+                    photoImageView.setImageURI(editedImageUri);
+                    photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    break;
+                default: break;
+            }
+
+            if (requestCode == Constants.RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String picturePath = cursor.getString(columnIndex);
+                cursor.close();
+                photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+            }
+
+            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
+                Timber.d("resolution code 1000");
+                checkLocationPermissions();
+            }
+
+            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
+                Timber.d("Result Cancelled, GPS Not connected");
+                logoImagesLayout.setVisibility(View.VISIBLE);
+                // loadAnimations();
+            }
+        }
+        Timber.d("-----onActivityResult END -------");
+    }
+
+
+
+
+    //================================================================================
+    // Weather API
+    //================================================================================
 
     protected void callForecastApi(){
 
@@ -370,104 +408,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Timber.d("-----onActivityResult START ------- RESULT CODE: " + resultCode);
-        Timber.d("-----onActivityResult START ------- REQUEST CODE: " + requestCode);
-        if(resultCode == RESULT_OK){
-            switch(requestCode){
-                case Constants.TAKE_PICTURE:
-                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
-                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
-                    break;
-                case Constants.GET_EDIT_PICTURE:
-                    editedImageUri = data.getData();
-                    Log.d(TAG, "Picture Take " + editedImageUri);
 
 
-                    editedImageUri = moveToContentProvider(editedImageUri);
-
-
-//                    String id = editedImageUri.getLastPathSegment();
-//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
-//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//                    Timber.d("URI: Printer ID " + id);
-//
-//                    ContentValues test_values = new ContentValues();
-//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
-//                    Timber.d("URI: Printer new Path " + newPath);
-//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
-//
-//                    String sIMAGE_ID = editedImageUri.toString();
-//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
-//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
-//
-//
-//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
-//
-//                    Timber.d("URI: Printer update " + res);
-                    photoImageView.setImageURI(editedImageUri);
-                    photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                    break;
-                default: break;
-            }
-
-            if (requestCode == Constants.RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
-                Uri selectedImage = data.getData();
-                String[] filePathColumn = { MediaStore.Images.Media.DATA };
-                Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-                cursor.moveToFirst();
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                String picturePath = cursor.getString(columnIndex);
-                cursor.close();
-                photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-            }
-
-            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
-                Timber.d("resolution code 1000");
-                checkLocationPermissions();
-            }
-
-            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
-                Timber.d("Result Cancelled, GPS Not connected");
-                logoImagesLayout.setVisibility(View.VISIBLE);
-               // loadAnimations();
-            }
-        }
-        Timber.d("-----onActivityResult END -------");
-    }
-
-    private Uri moveToContentProvider(Uri uri){
-        if(!pictureId.equals("")){
-            Log.d(TAG, "URI: pictureId " + pictureId);
-            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?",new String[]{pictureId});
-            Log.d(TAG, "URI: pictureId rows deleted" + rowsDeleted);
-        }
-        try{
-            Timber.d("URI: MoveToContentProvider Old URI" + uri);
-            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
-            Timber.d("URI: MoveToContentProvider NEW URI" + uri);
-            pictureId = newUri.getLastPathSegment();
-            return newUri;
-        }catch(FileNotFoundException e){
-            e.printStackTrace();
-        }
-        return uri;
-    }
-
-
-
-// ------- Get Location ---------//
-
-    private void setGoogleApiClient() {
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-    }
+    //================================================================================
+    // Permissions Methods
+    //================================================================================
 
     private void checkLocationPermissions() {
         //Ask for permission if we don't have it
@@ -550,6 +495,22 @@ public class MainActivity extends AppCompatActivity
                 Timber.d("------- getLatLongCoordinates    lastlocation == null   END------");
             }
 
+        }
+    }
+
+
+
+    //================================================================================
+    // Google Maps API & Sensor Connection Methods
+    //================================================================================
+
+    private void setGoogleApiClient() {
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
     }
 
@@ -658,8 +619,9 @@ public class MainActivity extends AppCompatActivity
 
 
 
-// ----- Initialization Stuff -----////
-
+    //================================================================================
+    // Initialization Methods
+    //================================================================================
 
     private void initializeViews() {
         Timber.d("------- Init View START------");
@@ -731,10 +693,52 @@ public class MainActivity extends AppCompatActivity
         locationTextView.setTextColor(color);
     }
 
+    private void initSensorManager(){
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+
+        distanceUnit = AltimatePrefs.getUnitPreference(MainActivity.this);
+
+        float basePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+        if(basePressure != 0f) {
+            myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+            basePressureCoefficient = 1.0 / myBasePressure;
+        }
+    }
+
+    private void initPrinterHepler(){
+        photoPrinter = new PrintHelper(MainActivity.this);
+    }
+
+    private void initActionBar(){
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("Chill Foundation");
+    }
+
+    private void initAnimations(){
+        Timber.d("------- INIT ANIMATIONS START -----");
+        bounceRightToLeftAnimation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.translate);
+        Timber.d("------- INIT ANIMATIONS END -----");
+    }
+
+    private void loadAnimations(){
+        Timber.d("------- ANIMATIONS START -----");
+        snowFallTextView.startAnimation(bounceRightToLeftAnimation);
+        temperatureTextView.startAnimation(bounceRightToLeftAnimation);
+        elevationTextView.startAnimation(bounceRightToLeftAnimation);
+        weatherSummaryTextView.startAnimation(bounceRightToLeftAnimation);
+//        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
+        locationTextView.startAnimation(bounceRightToLeftAnimation);
+        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
+        Timber.d("------- ANIMATIONS END -----");
+    }
 
 
 
-// -------- CHECK INTERNET CONNECTION -----//
+    //================================================================================
+    // Check Internet Connection
+    //================================================================================
 
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -793,7 +797,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     @Override
     public void onConnectionSuspended(int i) {
 
@@ -806,7 +809,10 @@ public class MainActivity extends AppCompatActivity
 
 
 
-// --------- Menu icons -------////
+    //================================================================================
+    // Toolbar Menu Methods
+    //================================================================================
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
@@ -867,6 +873,12 @@ public class MainActivity extends AppCompatActivity
                 return super.onOptionsItemSelected(item);
         }
     }
+
+
+
+    //================================================================================
+    // Sensor Methods
+    //================================================================================
 
     @Override
     public void onSensorChanged(SensorEvent event) {
