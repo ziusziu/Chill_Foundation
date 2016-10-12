@@ -43,7 +43,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -57,15 +56,12 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import de.greenrobot.event.EventBus;
 import foundation.chill.model.DistanceUnit;
 import foundation.chill.model.forecast.Weather;
 import foundation.chill.provider.ForecastService;
@@ -97,7 +93,7 @@ public class MainActivity extends AppCompatActivity
     FloatingActionButton shareFAB;
     Button color1Button, color2Button, color3Button, color4Button;
     TextView snowFallTextView, temperatureTextView, elevationTextView, weatherSummaryTextView,
-            locationTextView, locationHyphenTextView;
+            locationTextView;
     LinearLayout logoImagesLayout;
 
     Animation bounceRightToLeftAnimation;
@@ -145,107 +141,103 @@ public class MainActivity extends AppCompatActivity
 
         getReceiverAddress();
         initAnimations();
-
-        /**
-         *  Get an instance of the sensor service, and use that to get an instance of
-         *  a particular sensor.
-         */
-
-
-    }
-
-    private void initSensorManager(){
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-
-        distanceUnit = AltimatePrefs.getUnitPreference(MainActivity.this);
-
-        float basePressure = AltimatePrefs.getBasePressure(MainActivity.this);
-        if(basePressure != 0f) {
-            myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
-            basePressureCoefficient = 1.0 / myBasePressure;
-        }
-    }
-
-    private void initPrinterHepler(){
-        photoPrinter = new PrintHelper(MainActivity.this);
-    }
-
-    private void initActionBar(){
-        setSupportActionBar(toolbar);
-        actionBar = getSupportActionBar();
-        actionBar.setTitle("Chill Foundation");
-    }
-
-    private void initAnimations(){
-        Timber.d("------- INIT ANIMATIONS START -----");
-        bounceRightToLeftAnimation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.translate);
-        Timber.d("------- INIT ANIMATIONS END -----");
-    }
-
-    private void loadAnimations(){
-        Timber.d("------- ANIMATIONS START -----");
-        snowFallTextView.startAnimation(bounceRightToLeftAnimation);
-        temperatureTextView.startAnimation(bounceRightToLeftAnimation);
-        elevationTextView.startAnimation(bounceRightToLeftAnimation);
-        weatherSummaryTextView.startAnimation(bounceRightToLeftAnimation);
-//        locationHyphenTextView.startAnimation(bounceRightToLeftAnimation);
-        locationTextView.startAnimation(bounceRightToLeftAnimation);
-        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
-        Timber.d("------- ANIMATIONS END -----");
     }
 
 
+
+    //================================================================================
+    // Image Methods
+    //================================================================================
+
+    /**
+     *
+     * Set long click listener on ImageView.
+     * Long click will
+     * 1) Convert image to bitmap
+     * 2) Store image to Content Provider URI
+     * 3) Start intent to Adobe Image Editor
+     *
+     */
     private void setImageViewClickListener(){
-
-
-
         photoImageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
                 Bitmap bitmap = ((BitmapDrawable) photoImageView.getDrawable()).getBitmap();
                 editedImageUri = getImageUri(getApplicationContext(), bitmap);
-                Log.d(TAG, "Photot Clicked" + editedImageUri);
-                Intent imageEditorIntent = new AdobeImageIntent.Builder(getApplicationContext()).setData(editedImageUri).build();
+
+                Intent imageEditorIntent = new AdobeImageIntent
+                                                .Builder(getApplicationContext())
+                                                .setData(editedImageUri)
+                                                .build();
                 startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
-                //verifyStoragePermissions(MainActivity.this);
                 return false;
             }
         });
     }
 
-    public Uri getImageUri(Context inContext, Bitmap photoImage) {
+    /**  CAN GO TO UTILITIES
+     *
+     * Takes Bitmap, stores and returns a Content Provider Uri
+     * Will delete the previously stored image in Content URI before returning new URI
+     *
+     * @param context
+     * @param photoImage
+     * @return
+     *
+     */
+    public Uri getImageUri(Context context, Bitmap photoImage) {
 
+        // Check for previous URI and delete
         if(!screenshotId.equals("")){
-            Log.d(TAG, "URI: screenshotId " + screenshotId);
-            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?", new String[]{screenshotId});
-            Log.d(TAG, "URI: screenshotDelete " + rowsDeleted);
+            int rowsDeleted = getContentResolver().delete(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    MediaStore.Images.Media._ID + "=?",
+                    new String[]{screenshotId}
+            );
         }
 
 
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         photoImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), photoImage, "Photo", null);
+        String path = MediaStore.Images.Media.insertImage(context.getContentResolver(),
+                                                            photoImage,
+                                                            "Photo",
+                                                            null);
         Uri imageUri = Uri.parse(path);
         screenshotId = imageUri.getLastPathSegment();
-        Timber.d("URI: ImageUri Long Click: " + imageUri);
-        Timber.d("URI: Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        Timber.d("URI: screenShotId " + screenshotId);
-        //return Uri.parse(path);
         return imageUri;
     }
 
+    /** CAN GO TO UTILITIES
+     *
+     * Check permissions for writing to external storage
+     * Continue to take photo if permissions granted
+     *
+     * @param activity
+     *
+     */
     public void verifyStoragePermissions(Activity activity){
-        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int permission = ActivityCompat
+                        .checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if(permission != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(activity, Constants.PERMISSIONS_STORAGE, Constants.REQUEST_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(activity,
+                                                Constants.PERMISSIONS_STORAGE,
+                                                Constants.REQUEST_EXTERNAL_STORAGE);
         }else{
+            // Permission Granted, Take Photo
             imageUri = UtilityFunction.takePhoto(activity);
         }
     }
 
-
+    /** CAN GO TO UTILITIES
+     *
+     * Take the image from view id and return a bitmap
+     *
+     * @param view
+     * @return
+     *
+     */
     public Bitmap takeScreenshot(View view) {
         View rootView = view.getRootView().findViewById(R.id.photo_container);
         rootView.setDrawingCacheEnabled(true);
@@ -255,6 +247,13 @@ public class MainActivity extends AppCompatActivity
         return b1;
     }
 
+    /** CAN GO TO UTILITIES, MAKE IMAGE NAME A GLOBAL VARIABLE
+     *
+     * Saves image to DIRECTORY_PICTURES with name screenshot.jpg
+     *
+     * @param bitmap
+     *
+     */
     public void saveBitmap(Bitmap bitmap) {
         if (bitmap == null) {
             return;
@@ -272,24 +271,33 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+    /** CAN COMBINE WIT saveBitmap(Bitmap bitmap) to return URI
+     *
+     * Gets the uri of saved image
+     *
+     * @return
+     *
+     */
     public Uri getScreenshotFileUri(){
         File pix = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         File imagePath1 = new File(pix, "screenshot.jpg");
         return Uri.fromFile(imagePath1);
     }
 
-// ------------------ FAB STUFF ---------------------//
 
+    /**
+     *
+     * setFab to take screenshot and send image to Instagram
+     *
+     */
     private void setFabClickListenter(){
         shareFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "Send Clicked " + editedImageUri);
-
                 saveBitmap(takeScreenshot(view));
                 Uri imagePathFileUri = getScreenshotFileUri();
 
-                Log.d(TAG, "Share Image uri " + imagePathFileUri);
                 //UtilityFunction.sendTweet(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
                 //UtilityFunction.postTumblr(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
                 UtilityFunction.postInstagram(MainActivity.this, "#Chill#ChillFoundation", imagePathFileUri);
@@ -300,14 +308,131 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-// ---------------- Weather API ------------- /////
+    /**
+     *
+     * Move item in provided to Content Provider
+     * 1) Deletes previous item in Content Provider from app
+     * 2) Returns new Content Provider URI after item inserted
+     *
+     * @param uri
+     * @return
+     */
+    private Uri moveToContentProvider(Uri uri){
+        if(!pictureId.equals("")){
+            // Delete previous image stored in URI
+            Log.d(TAG, "URI: pictureId " + pictureId);
+            int rowsDeleted = getContentResolver().delete(
+                                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                                    MediaStore.Images.Media._ID + "=?",
+                                                    new String[]{pictureId}
+                                                    );
+            Log.d(TAG, "URI: pictureId rows deleted" + rowsDeleted);
+        }
+        try{
+            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
+            // Update previous URI Id
+            pictureId = newUri.getLastPathSegment();
+            return newUri;
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return uri;
+    }
 
+    /** COMBINE 3) and 4)
+     *
+     * Handle results from different requests
+     * 1) Take Photo and Adobe Edit Picture
+     * 2) Loading image
+     * 3) Handle GPS NOT CONNECTED, okay clicked
+     * 4) Handle GSP NOT CONNECTED, cancel clicked
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Timber.d("-----onActivityResult START ------- RESULT CODE: " + resultCode);
+        Timber.d("-----onActivityResult START ------- REQUEST CODE: " + requestCode);
+        if(resultCode == RESULT_OK){
+            switch(requestCode){
+                case Constants.TAKE_PICTURE:
+                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
+                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
+                    break;
+                case Constants.GET_EDIT_PICTURE:
+                    editedImageUri = data.getData();
+                    Log.d(TAG, "Picture Take " + editedImageUri);
+
+
+                    editedImageUri = moveToContentProvider(editedImageUri);
+//                    String id = editedImageUri.getLastPathSegment();
+//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
+//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                    Timber.d("URI: Printer ID " + id);
+//
+//                    ContentValues test_values = new ContentValues();
+//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
+//                    Timber.d("URI: Printer new Path " + newPath);
+//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
+//
+//                    String sIMAGE_ID = editedImageUri.toString();
+//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
+//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
+//
+//
+//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
+//
+//                    Timber.d("URI: Printer update " + res);
+                    photoImageView.setImageURI(editedImageUri);
+                    photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    break;
+                default: break;
+            }
+
+            if (requestCode == Constants.RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String picturePath = cursor.getString(columnIndex);
+                cursor.close();
+                photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+            }
+
+            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
+                Timber.d("resolution code 1000");
+                checkLocationPermissions();
+            }
+
+            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
+                Timber.d("Result Cancelled, GPS Not connected");
+                logoImagesLayout.setVisibility(View.VISIBLE);
+                // loadAnimations();
+            }
+        }
+        Timber.d("-----onActivityResult END -------");
+    }
+
+
+
+
+    //================================================================================
+    // Weather API
+    //================================================================================
+
+    /**
+     *
+     * Use RxJava to makeRequest to API
+     * 1) Update text with response
+     * 2) Load Text Animations
+     *
+     */
     protected void callForecastApi(){
 
         ForecastService.ForecastRx forecast = ForecastService.createRx();
-
-    //    latitude = "-73.723975";
-    //    longitude = "-66.215334";
 
         Timber.d("PRINT LATITUDE AND LONGITUDE " + latitude + " " + longitude);
         if(latitude.equals("0.0") & longitude.equals("0.0")){
@@ -370,105 +495,19 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Timber.d("-----onActivityResult START ------- RESULT CODE: " + resultCode);
-        Timber.d("-----onActivityResult START ------- REQUEST CODE: " + requestCode);
-        if(resultCode == RESULT_OK){
-            switch(requestCode){
-                case Constants.TAKE_PICTURE:
-                    Intent imageEditorIntent = new AdobeImageIntent.Builder(this).setData(imageUri).build();
-                    startActivityForResult(imageEditorIntent, Constants.GET_EDIT_PICTURE);
-                    break;
-                case Constants.GET_EDIT_PICTURE:
-                    editedImageUri = data.getData();
-                    Log.d(TAG, "Picture Take " + editedImageUri);
 
 
-                    editedImageUri = moveToContentProvider(editedImageUri);
+    //================================================================================
+    // Permissions Methods
+    //================================================================================
 
-
-//                    String id = editedImageUri.getLastPathSegment();
-//                    Log.d(TAG, "URI: Picture Take moved to content provider " + editedImageUri);
-//                    Timber.d("URI: Picture Take Mediastore " + MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//                    Timber.d("URI: Printer ID " + id);
-//
-//                    ContentValues test_values = new ContentValues();
-//                    String newPath = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "41070").toString();
-//                    Timber.d("URI: Printer new Path " + newPath);
-//                    test_values.put(MediaStore.Images.Media.DATA, newPath);
-//
-//                    String sIMAGE_ID = editedImageUri.toString();
-//                    Timber.d("URI: Printer old Path " + sIMAGE_ID);
-//                    Timber.d("URI: Printer MediaColumns " + MediaStore.MediaColumns.DATA);
-//
-//
-//                    int res = getContentResolver().update(editedImageUri, test_values, null, null);//, MediaStore.MediaColumns.DATA + "='" + sIMAGE_ID + "'", null);
-//
-//                    Timber.d("URI: Printer update " + res);
-                    photoImageView.setImageURI(editedImageUri);
-                    photoImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                    break;
-                default: break;
-            }
-
-            if (requestCode == Constants.RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
-                Uri selectedImage = data.getData();
-                String[] filePathColumn = { MediaStore.Images.Media.DATA };
-                Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-                cursor.moveToFirst();
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                String picturePath = cursor.getString(columnIndex);
-                cursor.close();
-                photoImageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-            }
-
-            if(requestCode == Constants.RESULT_GPS_NOT_CONNECT && resultCode == RESULT_OK){
-                Timber.d("resolution code 1000");
-                checkLocationPermissions();
-            }
-
-            if(resultCode == RESULT_CANCELED && requestCode == Constants.RESULT_GPS_NOT_CONNECT){
-                Timber.d("Result Cancelled, GPS Not connected");
-                logoImagesLayout.setVisibility(View.VISIBLE);
-               // loadAnimations();
-            }
-        }
-        Timber.d("-----onActivityResult END -------");
-    }
-
-    private Uri moveToContentProvider(Uri uri){
-        if(!pictureId.equals("")){
-            Log.d(TAG, "URI: pictureId " + pictureId);
-            int rowsDeleted = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media._ID + "=?",new String[]{pictureId});
-            Log.d(TAG, "URI: pictureId rows deleted" + rowsDeleted);
-        }
-        try{
-            Timber.d("URI: MoveToContentProvider Old URI" + uri);
-            Uri newUri = Uri.parse(MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), null, null));
-            Timber.d("URI: MoveToContentProvider NEW URI" + uri);
-            pictureId = newUri.getLastPathSegment();
-            return newUri;
-        }catch(FileNotFoundException e){
-            e.printStackTrace();
-        }
-        return uri;
-    }
-
-
-
-// ------- Get Location ---------//
-
-    private void setGoogleApiClient() {
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-    }
-
+    /**
+     *
+     * Check permissions to access location,
+     * 1) Ask for location permissions if none
+     * 2) Get phone's lat, long if permisisons granted
+     *
+     */
     private void checkLocationPermissions() {
         //Ask for permission if we don't have it
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -488,6 +527,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+    /** SEEMS REDUNDANT, MIGHT BE ABLE TO REMOVE OR COMBINE
+     *
+     * Handle requests to checking permission
+     * 1) Get Lat Long if permission given
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -506,6 +556,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /** PERMISSIONS AND API CONNECTION CODE VERY CONVOLUTED, NEED TO SIMPLIFY
+     *
+     * Check for permissions
+     * 1) Get Lat and Long from phone
+     *
+     */
     private void getLatLongCoordinates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -553,6 +609,33 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
+    //================================================================================
+    // Google Maps API & Sensor Connection Methods
+    //================================================================================
+
+    /**
+     *
+     * Set Google API Client if there is none
+     *
+     */
+    private void setGoogleApiClient() {
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+    }
+
+    /**
+     *
+     * Connect the google api client
+     * Google api client does not have to be built prior to connect
+     *
+     */
     @Override
     protected void onStart() {
         Timber.d("----- OnStart -----");
@@ -561,7 +644,11 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
     }
 
-
+    /**
+     *
+     * Request location of phone immediately
+     *
+     */
     private void requestLocationStatus(){
         Timber.d("------- RequestLocationStatus START ----------");
         LocationRequest locationRequest = LocationRequest.create();
@@ -617,6 +704,16 @@ public class MainActivity extends AppCompatActivity
         Timber.d("------- RequestLocationStatus END ----------");
     }
 
+
+    /**
+     *
+     * When location changes
+     * 1) Use new lat long to get address
+     * 2) Make forecast api call with new lat long
+     *
+     * @param location
+     *
+     */
     @Override
     public void onLocationChanged(Location location) {
         if(googleApiClient.isConnected()){
@@ -637,12 +734,22 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    /**
+     *
+     * Register sensor listener on resume
+     *
+     */
     @Override
     protected void onResume() {
         super.onResume();
         sensorManager.registerListener(MainActivity.this, pressure, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    /**
+     *
+     * Disconnect google api client on stop
+     *
+     */
     @Override
     protected void onStop() {
         Timber.d(" ------- onStop -----");
@@ -650,6 +757,11 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
+    /**
+     *
+     * Unregister sensor on pause
+     *
+     */
     @Override
     protected void onPause() {
         super.onPause();
@@ -657,12 +769,20 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    //================================================================================
+    // Initialization Methods
+    //================================================================================
 
-// ----- Initialization Stuff -----////
-
-
+    /**
+     *
+     * Initialize views for
+     * 1) Toolbar
+     * 2) Buttons
+     * 3) TextViews
+     * 4) Layouts
+     *
+     */
     private void initializeViews() {
-        Timber.d("------- Init View START------");
         toolbar = (Toolbar)findViewById(R.id.toolbar);
         color1Button = (Button) findViewById(R.id.color1_button);
         color2Button = (Button) findViewById(R.id.color2_button);
@@ -673,13 +793,16 @@ public class MainActivity extends AppCompatActivity
         elevationTextView = (TextView) findViewById(R.id.elevation_textView);
         weatherSummaryTextView = (TextView) findViewById(R.id.weatherSummary_textView);
         locationTextView = (TextView) findViewById(R.id.location_textView);
-        //locationHyphenTextView = (TextView) findViewById(R.id.locationHyphen_textView);
         photoImageView = (ImageView) findViewById(R.id.photo_imageView);
         shareFAB = (FloatingActionButton) findViewById(R.id.fab);
         logoImagesLayout = (LinearLayout) findViewById(R.id.logo_linearLayout);
-        Timber.d("------- Init View END------");
     }
 
+    /**
+     *
+     * Call click listeners on all the buttons
+     *
+     */
     private void initColorButtons() {
         Timber.d("------- Init Color Button Listeners START------");
         setButtonOnClickListener(color1Button);
@@ -689,6 +812,13 @@ public class MainActivity extends AppCompatActivity
         Timber.d("------- Init Color Button Listeners END------");
     }
 
+    /**
+     *
+     * Change text color on button click
+     *
+     * @param button
+     *
+     */
     private void setButtonOnClickListener(final Button button) {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -722,20 +852,142 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
+    /**
+     *
+     * Change text color to input color
+     *
+     * @param color
+     */
     private void setTextColor(int color) {
         snowFallTextView.setTextColor(color);
         temperatureTextView.setTextColor(color);
         elevationTextView.setTextColor(color);
         weatherSummaryTextView.setTextColor(color);
-//        locationHyphenTextView.setTextColor(color);
         locationTextView.setTextColor(color);
+    }
+
+    /**
+     *
+     * Get the base pressures for elevation calucations
+     *
+     */
+    private void initSensorManager(){
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+
+        distanceUnit = AltimatePrefs.getUnitPreference(MainActivity.this);
+
+        float basePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+        if(basePressure != 0f) {
+            myBasePressure = AltimatePrefs.getBasePressure(MainActivity.this);
+            basePressureCoefficient = 1.0 / myBasePressure;
+        }
+    }
+
+    /**
+     *
+     * Initialize printer helper
+     *
+     */
+    private void initPrinterHepler(){
+        photoPrinter = new PrintHelper(MainActivity.this);
+    }
+
+    /**
+     *
+     * Initialize and set title of Action Bar
+     *
+     */
+    private void initActionBar(){
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("Chill Foundation");
+    }
+
+    /**
+     *
+     * Initialize Bouncing Animation
+     *
+     */
+    private void initAnimations(){
+        bounceRightToLeftAnimation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.translate);
+    }
+
+    /**
+     *
+     * Load animations to text views
+     *
+     */
+    private void loadAnimations(){
+        snowFallTextView.startAnimation(bounceRightToLeftAnimation);
+        temperatureTextView.startAnimation(bounceRightToLeftAnimation);
+        elevationTextView.startAnimation(bounceRightToLeftAnimation);
+        weatherSummaryTextView.startAnimation(bounceRightToLeftAnimation);
+        locationTextView.startAnimation(bounceRightToLeftAnimation);
+        logoImagesLayout.startAnimation(bounceRightToLeftAnimation);
     }
 
 
 
+    //================================================================================
+    // Address results
+    //================================================================================
 
-// -------- CHECK INTERNET CONNECTION -----//
 
+    /** MOVE TO ANOTHER LOCATION
+     *
+     * Start intent to fetch address
+     *
+     */
+    protected void startFetchAddressIntentService() {
+        Intent fetchAddressIntent = new Intent(this, FetchAddressIntentService.class);
+        fetchAddressIntent.putExtra(Constants.RECEIVER, resultReceiver);
+        fetchAddressIntent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
+        startService(fetchAddressIntent);
+    }
+
+    /** USE SINGLETON LIKE GOOGLE API CLIENT
+     *
+     * Instantiate receiver for address
+     *
+     */
+    private void getReceiverAddress(){
+        resultReceiver = new AddressResultReceiver(new Handler());
+    }
+
+    /**
+     *
+     * Handle results to address receiver
+     *
+     */
+    @SuppressLint("ParcelCreator")
+    class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string
+            // or an error message sent from the intent service.
+            addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
+            Log.d(TAG, "ADDRESS: " + addressOutput);
+
+            // Show a toast message if an address was found.
+            if (resultCode == Constants.SUCCESS_RESULT) {
+                Log.d(TAG, "ADDRESS FOUND: "+getString(R.string.address_found));
+            }
+
+        }
+    }
+
+    /**
+     *
+     * Currently does nothing
+     *
+     * @param connectionHint
+     */
     @Override
     public void onConnected(Bundle connectionHint) {
 
@@ -760,45 +1012,23 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    protected void startFetchAddressIntentService() {
-        Intent fetchAddressIntent = new Intent(this, FetchAddressIntentService.class);
-        fetchAddressIntent.putExtra(Constants.RECEIVER, resultReceiver);
-        fetchAddressIntent.putExtra(Constants.LOCATION_DATA_EXTRA, lastLocation);
-        startService(fetchAddressIntent);
-    }
-
-    private void getReceiverAddress(){
-        resultReceiver = new AddressResultReceiver(new Handler());
-    }
-
-    @SuppressLint("ParcelCreator")
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(int resultCode, Bundle resultData) {
-
-            // Display the address string
-            // or an error message sent from the intent service.
-            addressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
-            Log.d(TAG, "ADDRESS: " + addressOutput);
-
-            // Show a toast message if an address was found.
-            if (resultCode == Constants.SUCCESS_RESULT) {
-                Log.d(TAG, "ADDRESS FOUND: "+getString(R.string.address_found));
-            }
-
-        }
-    }
-
-
+    /**
+     *
+     * Currently does nothing
+     *
+     * @param i
+     */
     @Override
     public void onConnectionSuspended(int i) {
 
     }
 
+    /**
+     *
+     * Currently do nothing
+     *
+     * @param connectionResult
+     */
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
@@ -806,7 +1036,17 @@ public class MainActivity extends AppCompatActivity
 
 
 
-// --------- Menu icons -------////
+    //================================================================================
+    // Toolbar Menu Methods
+    //================================================================================
+
+    /**
+     *
+     * Inflate menu with icons with new color
+     *
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
@@ -823,6 +1063,16 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     *
+     * Handle clicks to menu icons
+     * 1) Take Photo
+     * 2) Load from gallery
+     * 3) Print screenshot
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
@@ -868,6 +1118,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
+    //================================================================================
+    // Sensor Methods
+    //================================================================================
+
+    /**
+     *
+     * Recalculate elevation on sensor change
+     *
+     * @param event
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         final double current_millibars_of_pressure = event.values[0];
@@ -903,6 +1165,13 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     *
+     * Currently does nothing
+     *
+     * @param sensor
+     * @param accuracy
+     */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
